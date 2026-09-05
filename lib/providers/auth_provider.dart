@@ -6,9 +6,11 @@ import '../services/secure_storage_service.dart';
 
 class AuthProvider with ChangeNotifier {
   static const String _tokenKey = 'jobvaani_auth_token';
+  static const String _userIdKey = 'jobvaani_user_id';
   static const String _userNameKey = 'jobvaani_user_name';
   static const String _userEmailKey = 'jobvaani_user_email';
   static const String _userPhoneKey = 'jobvaani_user_phone';
+  static const String _userLanguageKey = 'jobvaani_user_language';
   static const String _educationKey = 'jobvaani_user_education';
   static const String _skillsKey = 'jobvaani_user_skills';
   static const String _locationsKey = 'jobvaani_user_locations';
@@ -32,9 +34,12 @@ class AuthProvider with ChangeNotifier {
   // Unauthenticated by default until token verification succeeds
   bool _isAuthenticated = false;
   String? _token;
+  AuthUser? _currentUser;
+
   String _userName = 'Job Seeker';
   String _userEmail = '';
-  String _userPhone = '+91 98765 43210';
+  String _userPhone = '';
+  String _userLanguage = 'en';
   String _education = 'B.Tech in Computer Science & Engineering';
   String _college = 'National Institute of Technology';
   String _graduationYear = '2025';
@@ -45,9 +50,9 @@ class AuthProvider with ChangeNotifier {
   List<String> _preferredLocations = ['Bengaluru', 'Hyderabad', 'Remote', 'Delhi NCR'];
   List<String> _jobCategories = ['Software Development', 'Cybersecurity', 'Government Jobs'];
   List<String> _preferredJobTypes = ['Full Time', 'Government'];
-  String? _resumeFileName = 'Mowli_Kumar_Resume.pdf';
-  DateTime? _resumeUploadedAt = DateTime(2026, 9, 1);
-  bool _isProfileCompleted = true;
+  String? _resumeFileName = 'Resume.pdf';
+  DateTime? _resumeUploadedAt;
+  bool _isProfileCompleted = false;
   bool _notifGovtAlerts = true;
   bool _notifJobMatches = true;
   bool _notifDeadlines = true;
@@ -55,9 +60,12 @@ class AuthProvider with ChangeNotifier {
 
   bool get isAuthenticated => _isAuthenticated;
   String? get token => _token;
-  String get userName => _userName;
-  String get userEmail => _userEmail;
-  String get userPhone => _userPhone;
+  AuthUser? get currentUser => _currentUser;
+  String? get userId => _currentUser?.id;
+  String get userName => _currentUser?.name ?? _userName;
+  String get userEmail => _currentUser?.email ?? _userEmail;
+  String get userPhone => _currentUser?.phone ?? _userPhone;
+  String get userLanguage => _currentUser?.language ?? _userLanguage;
   String get education => _education;
   String get college => _college;
   String get graduationYear => _graduationYear;
@@ -84,7 +92,7 @@ class AuthProvider with ChangeNotifier {
     checkAuthState();
   }
 
-  /// Verifies secure token storage on startup
+  /// Verifies secure token storage and authenticates user on app startup
   Future<void> checkAuthState() async {
     try {
       final savedToken = await _secureStorage.getToken();
@@ -92,9 +100,26 @@ class AuthProvider with ChangeNotifier {
         _token = savedToken;
         _isAuthenticated = true;
 
+        final userData = await _secureStorage.getUserData();
+        if (userData != null) {
+          _currentUser = AuthUser.fromJson(userData);
+          _userName = _currentUser!.name;
+          _userEmail = _currentUser!.email;
+          if (_currentUser!.phone != null) _userPhone = _currentUser!.phone!;
+          _userLanguage = _currentUser!.language;
+        } else {
+          final prefs = await SharedPreferences.getInstance();
+          final email = prefs.getString(_userEmailKey) ?? '';
+          final name = prefs.getString(_userNameKey) ?? 'Candidate';
+          final id = prefs.getString(_userIdKey) ?? 'usr_${email.hashCode.abs()}';
+          final lang = prefs.getString(_userLanguageKey) ?? 'en';
+          _currentUser = AuthUser(id: id, name: name, email: email, language: lang);
+          _userName = name;
+          _userEmail = email;
+          _userLanguage = lang;
+        }
+
         final prefs = await SharedPreferences.getInstance();
-        _userName = prefs.getString(_userNameKey) ?? _userName;
-        _userEmail = prefs.getString(_userEmailKey) ?? _userEmail;
         _userPhone = prefs.getString(_userPhoneKey) ?? _userPhone;
         _education = prefs.getString(_educationKey) ?? _education;
         _college = prefs.getString(_collegeKey) ?? _college;
@@ -117,12 +142,63 @@ class AuthProvider with ChangeNotifier {
       } else {
         _isAuthenticated = false;
         _token = null;
+        _currentUser = null;
         notifyListeners();
       }
     } catch (_) {
       _isAuthenticated = false;
       _token = null;
+      _currentUser = null;
     }
+  }
+
+  /// Registers new user account with complete isolation
+  Future<AuthResult> register(
+    String name,
+    String email,
+    String password, {
+    String? phone,
+    String language = 'en',
+  }) async {
+    final result = await _authRepository.register(
+      name: name,
+      email: email,
+      password: password,
+      mobile: phone,
+      language: language,
+    );
+
+    if (result.isSuccess && result.token != null) {
+      _isAuthenticated = true;
+      _token = result.token;
+      _currentUser = result.user ??
+          AuthUser(
+            id: 'usr_${email.hashCode.abs()}',
+            name: name,
+            email: email,
+            phone: phone,
+            language: language,
+          );
+
+      _userName = _currentUser!.name;
+      _userEmail = _currentUser!.email;
+      _userPhone = _currentUser!.phone ?? '';
+      _userLanguage = _currentUser!.language;
+
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_tokenKey, _token!);
+        await prefs.setString(_userIdKey, _currentUser!.id);
+        await prefs.setString(_userNameKey, _userName);
+        await prefs.setString(_userEmailKey, _userEmail);
+        await prefs.setString(_userPhoneKey, _userPhone);
+        await prefs.setString(_userLanguageKey, _userLanguage);
+      } catch (_) {}
+
+      notifyListeners();
+    }
+
+    return result;
   }
 
   /// Sends login request through AuthRepository with validation and secure token storage
@@ -132,21 +208,29 @@ class AuthProvider with ChangeNotifier {
     if (result.isSuccess && result.token != null) {
       _isAuthenticated = true;
       _token = result.token;
+      _currentUser = result.user ??
+          AuthUser(
+            id: 'usr_${email.hashCode.abs()}',
+            name: email.contains('@') ? email.split('@').first : 'Candidate',
+            email: email,
+          );
 
-      if (result.user != null) {
-        _userName = result.user!.name;
-        _userEmail = result.user!.email;
-        if (result.user!.phone != null) _userPhone = result.user!.phone!;
-        if (result.user!.education != null) _education = result.user!.education!;
-        if (result.user!.skills != null) _skills = result.user!.skills!;
-        if (result.user!.locations != null) _preferredLocations = result.user!.locations!;
-      }
+      _userName = _currentUser!.name;
+      _userEmail = _currentUser!.email;
+      if (_currentUser!.phone != null) _userPhone = _currentUser!.phone!;
+      _userLanguage = _currentUser!.language;
+      if (_currentUser!.education != null) _education = _currentUser!.education!;
+      if (_currentUser!.skills != null) _skills = _currentUser!.skills!;
+      if (_currentUser!.locations != null) _preferredLocations = _currentUser!.locations!;
 
       try {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString(_tokenKey, _token!);
+        await prefs.setString(_userIdKey, _currentUser!.id);
         await prefs.setString(_userNameKey, _userName);
         await prefs.setString(_userEmailKey, _userEmail);
+        await prefs.setString(_userPhoneKey, _userPhone);
+        await prefs.setString(_userLanguageKey, _userLanguage);
       } catch (_) {}
 
       notifyListeners();
@@ -159,14 +243,24 @@ class AuthProvider with ChangeNotifier {
     await Future.delayed(const Duration(milliseconds: 700));
     _isAuthenticated = true;
     _token = 'google_oauth_${DateTime.now().millisecondsSinceEpoch}';
-    _userName = 'Mowli Kumar';
-    _userEmail = 'mowlikumar@gmail.com';
+    _currentUser = AuthUser(
+      id: 'usr_google_auth',
+      name: 'Mowli Kumar',
+      email: 'mowlikumar@gmail.com',
+      phone: '+91 98765 43210',
+      language: 'en',
+    );
+    _userName = _currentUser!.name;
+    _userEmail = _currentUser!.email;
+    _userPhone = _currentUser!.phone ?? '';
 
     await _secureStorage.saveToken(_token!);
+    await _secureStorage.saveUserData(_currentUser!.toJson());
 
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_tokenKey, _token!);
+      await prefs.setString(_userIdKey, _currentUser!.id);
       await prefs.setString(_userNameKey, _userName);
       await prefs.setString(_userEmailKey, _userEmail);
     } catch (_) {}
@@ -177,6 +271,42 @@ class AuthProvider with ChangeNotifier {
 
   Future<ForgotPasswordResponse> sendPasswordReset(String email) async {
     return _authRepository.sendPasswordReset(email);
+  }
+
+  Future<void> updateProfileDetails({
+    String? name,
+    String? email,
+    String? phone,
+    String? education,
+  }) async {
+    if (name != null && name.isNotEmpty) _userName = name;
+    if (email != null && email.isNotEmpty) _userEmail = email;
+    if (phone != null) _userPhone = phone;
+    if (education != null) _education = education;
+
+    if (_currentUser != null) {
+      _currentUser = AuthUser(
+        id: _currentUser!.id,
+        name: _userName,
+        email: _userEmail,
+        phone: _userPhone,
+        language: _currentUser!.language,
+        education: _education,
+        skills: _skills,
+        locations: _preferredLocations,
+      );
+      await _secureStorage.saveUserData(_currentUser!.toJson());
+    }
+
+    notifyListeners();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_userNameKey, _userName);
+      await prefs.setString(_userEmailKey, _userEmail);
+      await prefs.setString(_userPhoneKey, _userPhone);
+      await prefs.setString(_educationKey, _education);
+    } catch (_) {}
   }
 
   Future<void> updateProfile({
@@ -194,6 +324,21 @@ class AuthProvider with ChangeNotifier {
     if (graduationYear != null) _graduationYear = graduationYear;
     if (experience != null) _experience = experience;
     _isProfileCompleted = true;
+
+    if (_currentUser != null) {
+      _currentUser = AuthUser(
+        id: _currentUser!.id,
+        name: _userName,
+        email: _userEmail,
+        phone: _userPhone,
+        language: _currentUser!.language,
+        education: _education,
+        skills: _skills,
+        locations: _preferredLocations,
+      );
+      await _secureStorage.saveUserData(_currentUser!.toJson());
+    }
+
     notifyListeners();
 
     try {
@@ -324,9 +469,11 @@ class AuthProvider with ChangeNotifier {
   Future<void> logout() async {
     _isAuthenticated = false;
     _token = null;
+    _currentUser = null;
     _userName = 'Job Seeker';
     _userEmail = '';
     _userPhone = '';
+    _userLanguage = 'en';
     _education = '';
     _skills = [];
     _preferredLocations = [];
@@ -338,9 +485,11 @@ class AuthProvider with ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_tokenKey);
+      await prefs.remove(_userIdKey);
       await prefs.remove(_userNameKey);
       await prefs.remove(_userEmailKey);
       await prefs.remove(_userPhoneKey);
+      await prefs.remove(_userLanguageKey);
       await prefs.remove(_educationKey);
       await prefs.remove(_skillsKey);
       await prefs.remove(_locationsKey);

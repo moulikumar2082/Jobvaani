@@ -31,8 +31,168 @@
     <!-- App Viewport -->
     <div class="app-viewport" id="app-viewport">
       
+      <!-- SCREEN: LOGIN -->
+      <section class="screen" id="screen-login">
+        <div class="auth-container">
+          <div class="auth-logo-wrap">
+            <div class="auth-logo-badge">
+              <span class="material-symbols-rounded" style="font-size:36px; color:white;">work</span>
+            </div>
+            <h1 class="auth-brand-name">JobVaani</h1>
+            <p class="auth-tagline" id="auth-tagline">Every Opportunity, In Your Language</p>
+          </div>
+
+          <div class="auth-card">
+            <h2 class="auth-title" id="auth-login-title">Welcome Back</h2>
+            <p class="auth-subtitle" id="auth-login-subtitle">Sign in with your email and password</p>
+
+            <div class="auth-error-banner" id="login-error-banner" style="display:none;">
+              <span class="material-symbols-rounded">error</span>
+              <span id="login-error-text"></span>
+            </div>
+
+            <form id="form-login" onsubmit="return false;">
+              <div class="form-group">
+                <label class="form-label" for="login-email" id="lbl-login-email">Email Address</label>
+                <div class="input-wrap">
+                  <span class="material-symbols-rounded input-icon">mail</span>
+                  <input type="email" id="login-email" class="form-input" placeholder="name@example.com" required autocomplete="email">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="login-password" id="lbl-login-password">Password</label>
+                <div class="input-wrap">
+                  <span class="material-symbols-rounded input-icon">lock</span>
+                  <input type="password" id="login-password" class="form-input" placeholder="Enter password (min 6 chars)" required minlength="6" autocomplete="current-password">
+                  <button type="button" class="btn-toggle-pwd" id="btn-toggle-login-pwd">
+                    <span class="material-symbols-rounded" id="icon-toggle-login-pwd">visibility</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="auth-forgot-wrap">
+                <button type="button" class="text-btn" id="btn-forgot-pwd">Forgot Password?</button>
+              </div>
+
+              <button type="submit" class="primary-btn auth-submit-btn" id="btn-login-submit">
+                <span id="login-submit-text">Sign In</span>
+                <span class="auth-spinner" id="login-spinner" style="display:none;"></span>
+              </button>
+            </form>
+
+            <div class="auth-divider">
+              <span>OR</span>
+            </div>
+
+            <button type="button" class="demo-creds-btn" id="btn-fill-demo">
+              ⚡ Fill Demo Candidate Credentials
+            </button>
+
+            <div class="auth-switch-prompt">
+              <span id="txt-dont-have-acc">Don't have an account?</span>
+              <button type="button" class="text-link-btn" id="btn-goto-register">Create Account</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN: REGISTER -->
+      <section class="screen" id="screen-register">
+        <div class="auth-container">
+          <div class="auth-header-bar">
+            <button type="button" class="icon-btn" id="btn-register-back">
+              <span class="material-symbols-rounded">arrow_back_ios_new</span>
+            </button>
+            <span class="auth-top-title">Create Account</span>
+            <div style="width:36px;"></div>
+          </div>
+
+          <div class="auth-card">
+            <h2 class="auth-title" id="auth-register-title">Get Started</h2>
+            <p class="auth-subtitle" id="auth-register-subtitle">Create your personal JobVaani account</p>
+
+            <div class="auth-error-banner" id="register-error-banner" style="display:none;">
+              <span class="material-symbols-rounded">error</span>
+              <span id="register-error-text"></span>
+            </div>
+
+            <form id="form-register" onsubmit="return false;">
+              <div class="form-group">
+                <label class="form-label" for="reg-name" id="lbl-reg-name">Full Name</label>
+                <div class="input-wrap">
+                  <span class="material-symbols-rounded input-icon">person</span>
+                  <input type="text" id="reg-name" class="form-input" placeholder="e.g. Mouli Kumar" required minlength="2" autocomplete="name">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="reg-email" id="lbl-reg-email">Email Address</label>
+                <div class="input-wrap">
+                  <span class="material-symbols-rounded input-icon">mail</span>
+                  <input type="email" id="reg-email" class="form-input" placeholder="name@example.com" required autocomplete="email">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="reg-password" id="lbl-reg-password">Password</label>
+                <div class="input-wrap">
+                  <span class="material-symbols-rounded input-icon">lock</span>
+                  <input type="password" id="reg-password" class="form-input" placeholder="At least 6 characters" required minlength="6" autocomplete="new-password">
+                  <button type="button" class="btn-toggle-pwd" id="btn-toggle-reg-pwd">
+                    <span class="material-symbols-rounded" id="icon-toggle-reg-pwd">visibility</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="reg-confirm-pwd" id="lbl-reg-confirm-pwd">Confirm Password</label>
+                <div class="input-wrap">
+                  <span class="material-symbols-rounded input-icon">lock_reset</span>
+                  <input type="password" id="reg-confirm-pwd" class="form-input" placeholder="Re-enter password" required minlength="6" autocomplete="new-password">
+                  <button type="button" class="btn-toggle-pwd" id="btn-toggle-reg-confirm-pwd">
+                    <span class="material-symbols-rounded" id="icon-toggle-reg-confirm-pwd">visibility</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="reg-mobile" id="lbl-reg-mobile">Mobile Number (Optional)</label>
+                <div class="input-wrap">
+                  <span class="material-symbols-rounded input-icon">phone</span>
+                  <input type="tel" id="reg-mobile" class="form-input" placeholder="+91 9876543210" autocomplete="tel">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="reg-language" id="lbl-reg-lang">Preferred Language</label>
+                <div class="input-wrap">
+                  <span class="material-symbols-rounded input-icon">translate</span>
+                  <select id="reg-language" class="form-input form-select">
+                    <option value="en" selected>English (Default)</option>
+                    <option value="te">తెలుగు (Telugu)</option>
+                    <option value="hi">हिन्दी (Hindi)</option>
+                    <option value="pa">ਪੰਜਾਬੀ (Punjabi)</option>
+                  </select>
+                </div>
+              </div>
+
+              <button type="submit" class="primary-btn auth-submit-btn" id="btn-register-submit">
+                <span id="register-submit-text">Create Account</span>
+                <span class="auth-spinner" id="register-spinner" style="display:none;"></span>
+              </button>
+            </form>
+
+            <div class="auth-switch-prompt">
+              <span id="txt-already-have-acc">Already have an account?</span>
+              <button type="button" class="text-link-btn" id="btn-goto-login">Sign In</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- SCREEN: HOME -->
-      <section class="screen active" id="screen-home">
+      <section class="screen" id="screen-home">
         <!-- Top App Header -->
         <header class="app-header">
           <div class="greeting-text">

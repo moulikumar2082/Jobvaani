@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 abstract class ISecureStorageService {
   Future<void> saveToken(String token);
   Future<String?> getToken();
+  Future<bool> hasToken();
   Future<void> deleteToken();
   Future<void> saveUserData(Map<String, dynamic> data);
   Future<Map<String, dynamic>?> getUserData();
@@ -34,6 +35,12 @@ class SecureStorageService implements ISecureStorageService {
   }
 
   @override
+  Future<bool> hasToken() async {
+    final token = await getToken();
+    return token != null && token.isNotEmpty;
+  }
+
+  @override
   Future<void> deleteToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_keyToken);
@@ -45,6 +52,7 @@ class SecureStorageService implements ISecureStorageService {
     // Strip any sensitive fields if present
     final sanitized = Map<String, dynamic>.from(data)
       ..remove('password')
+      ..remove('passwordHash')
       ..remove('client_secret');
     await prefs.setString(_keyUserData, jsonEncode(sanitized));
   }

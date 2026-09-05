@@ -8,20 +8,25 @@ import '../services/deadline_alert_service.dart';
 import '../services/notification_service.dart';
 
 class JobsProvider with ChangeNotifier {
-  static const String _savedJobsPrefKey = 'jobvaani_saved_jobs_ids';
   static const String _readNotifsPrefKey = 'jobvaani_read_notif_ids';
 
   final Set<String> _savedJobIds = {};
   final Set<String> _readNotifIds = {};
   final List<NotificationModel> _dynamicAlerts = [];
+  String? _currentUserId;
   String _selectedHomeCategory = 'all'; // 'all', 'govt', 'private', 'internship'
   String _searchQuery = '';
   JobFilterCriteria _filterCriteria = JobFilterCriteria.empty;
 
   Set<String> get savedJobIds => _savedJobIds;
+  String? get currentUserId => _currentUserId;
   String get selectedHomeCategory => _selectedHomeCategory;
   String get searchQuery => _searchQuery;
   JobFilterCriteria get filterCriteria => _filterCriteria;
+
+  String _getUserPrefKey() => (_currentUserId != null && _currentUserId!.isNotEmpty)
+      ? 'jobvaani_saved_jobs_${_currentUserId}'
+      : 'jobvaani_saved_jobs_guest';
 
   JobsProvider() {
     _loadSavedJobs();
@@ -44,12 +49,10 @@ class JobsProvider with ChangeNotifier {
   Future<void> _loadSavedJobs() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final list = prefs.getStringList(_savedJobsPrefKey);
+      _currentUserId = prefs.getString('jobvaani_user_id');
+      final list = prefs.getStringList(_getUserPrefKey());
       if (list != null) {
         _savedJobIds.addAll(list);
-      } else {
-        _savedJobIds.addAll(['job_isro_01', 'job_swiggy_03', 'job_paytm_cyber_04', 'govt_ssc_01']);
-        await prefs.setStringList(_savedJobsPrefKey, _savedJobIds.toList());
       }
 
       final readNotifs = prefs.getStringList(_readNotifsPrefKey);
@@ -59,6 +62,28 @@ class JobsProvider with ChangeNotifier {
       checkDeadlineAlerts();
       notifyListeners();
     } catch (_) {}
+  }
+
+  /// Scopes saved jobs to the currently authenticated user
+  Future<void> loadSavedJobsForUser(String userId, {String? token}) async {
+    _currentUserId = userId;
+    _savedJobIds.clear();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final list = prefs.getStringList(_getUserPrefKey());
+      if (list != null) {
+        _savedJobIds.addAll(list);
+      }
+      checkDeadlineAlerts();
+      notifyListeners();
+    } catch (_) {}
+  }
+
+  /// Clears in-memory saved jobs and unbinds user session on logout
+  void clearUserSessionData() {
+    _currentUserId = null;
+    _savedJobIds.clear();
+    notifyListeners();
   }
 
   /// Evaluates active saved applications against deadline milestones (7d, 3d, 1d, 0d)
@@ -84,7 +109,7 @@ class JobsProvider with ChangeNotifier {
     notifyListeners();
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList(_savedJobsPrefKey, _savedJobIds.toList());
+      await prefs.setStringList(_getUserPrefKey(), _savedJobIds.toList());
     } catch (_) {}
     return willSave;
   }
@@ -94,7 +119,7 @@ class JobsProvider with ChangeNotifier {
     notifyListeners();
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList(_savedJobsPrefKey, []);
+      await prefs.setStringList(_getUserPrefKey(), []);
     } catch (_) {}
   }
 

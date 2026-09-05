@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/localization/locale_provider.dart';
 import '../../data/models/auth_models.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/jobs_provider.dart';
 import '../../widgets/jobvaani_logo.dart';
 import 'forgot_password_screen.dart';
 import 'register_screen.dart';
@@ -82,6 +84,17 @@ class _LoginScreenState extends State<LoginScreen> {
 
     // 4. Handle result
     if (result.isSuccess) {
+      final jobs = Provider.of<JobsProvider>(context, listen: false);
+      if (auth.currentUser != null) {
+        await jobs.loadSavedJobsForUser(auth.currentUser!.id, token: result.token);
+        final localeProv = Provider.of<LocaleProvider>(context, listen: false);
+        if (['en', 'te', 'hi', 'pa'].contains(auth.currentUser!.language)) {
+          await localeProv.setLocale(Locale(auth.currentUser!.language));
+        }
+      }
+
+      if (!mounted) return;
+
       // Prevent returning to Login using back button by clearing the navigation stack
       Navigator.of(context).pushAndRemoveUntil(
         PageRouteBuilder(
@@ -133,6 +146,13 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isGoogleLoading = false);
 
     if (success) {
+      final jobs = Provider.of<JobsProvider>(context, listen: false);
+      if (auth.currentUser != null) {
+        await jobs.loadSavedJobsForUser(auth.currentUser!.id, token: auth.token);
+      }
+
+      if (!mounted) return;
+
       Navigator.of(context).pushAndRemoveUntil(
         PageRouteBuilder(
           transitionDuration: const Duration(milliseconds: 350),

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../core/localization/locale_provider.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../providers/jobs_provider.dart';
 import '../../auth/login_screen.dart';
 import '../../language/language_selection_screen.dart';
 import 'edit_profile_screen.dart';
@@ -1710,14 +1711,70 @@ class ProfileScreen extends StatelessWidget {
                     color: const Color(0xFFDC2626),
                     title: l10n.logout,
                     subtitle: 'Sign out of your JobVaani profile',
-                    onTap: () async {
-                      await auth.logout();
-                      if (context.mounted) {
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(builder: (_) => const LoginScreen()),
-                          (route) => false,
-                        );
-                      }
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (dialogCtx) => AlertDialog(
+                          backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          title: Text(
+                            l10n.logoutConfirmTitle,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            ),
+                          ),
+                          content: Text(
+                            l10n.logoutConfirmMessage,
+                            style: TextStyle(
+                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                              height: 1.4,
+                            ),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(dialogCtx).pop(),
+                              child: Text(
+                                l10n.cancel,
+                                style: TextStyle(
+                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            ElevatedButton(
+                              onPressed: () async {
+                                Navigator.of(dialogCtx).pop();
+                                final jobs = Provider.of<JobsProvider>(context, listen: false);
+                                jobs.clearUserSessionData();
+                                await auth.logout();
+                                if (context.mounted) {
+                                  Navigator.of(context).pushAndRemoveUntil(
+                                    PageRouteBuilder(
+                                      transitionDuration: const Duration(milliseconds: 350),
+                                      pageBuilder: (_, __, ___) => const LoginScreen(),
+                                      transitionsBuilder: (_, a, __, c) =>
+                                          FadeTransition(opacity: a, child: c),
+                                    ),
+                                    (route) => false,
+                                  );
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFDC2626),
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: Text(
+                                l10n.logout,
+                                style: const TextStyle(fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
                     },
                     isDark: isDark,
                     isDestructive: true,

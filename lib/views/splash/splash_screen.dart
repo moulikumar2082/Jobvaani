@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/app_flow_provider.dart';
+import '../../providers/jobs_provider.dart';
 import '../../widgets/jobvaani_logo.dart';
 import '../onboarding/onboarding_screen.dart';
 import '../language/language_selection_screen.dart';
@@ -74,6 +75,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     } else if (!auth.isAuthenticated) {
       destination = const LoginScreen();
     } else {
+      final jobs = Provider.of<JobsProvider>(context, listen: false);
+      if (auth.currentUser != null) {
+        await jobs.loadSavedJobsForUser(auth.currentUser!.id, token: auth.token);
+      }
       destination = const MainNavigationScreen();
     }
 

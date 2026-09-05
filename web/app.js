@@ -2,15 +2,30 @@
 // Supporting Steps 1-25: Multilingual, AI Job Matching, 5-Factor Scoring, Deadline Alerts, FCM Push, Dark Mode
 
 document.addEventListener('DOMContentLoaded', () => {
-  // App State
+  // App State & Multi-User Authentication Engine
   let currentLang = localStorage.getItem('jobvaani_lang') || 'en';
   let isDarkMode = localStorage.getItem('jobvaani_theme_mode') === 'dark';
-  let currentTab = 'screen-home';
-  let savedJobIds = new Set(JSON.parse(localStorage.getItem('jobvaani_saved_jobs') || '["job_cyber_sec_ops_05", "job_upsc_02"]'));
+  let currentToken = localStorage.getItem('jobvaani_auth_token') || null;
+  let currentUser = null;
+
+  try {
+    const savedUser = localStorage.getItem('jobvaani_current_user');
+    if (savedUser && currentToken) {
+      currentUser = JSON.parse(savedUser);
+    }
+  } catch (_) {
+    currentUser = null;
+  }
+
+  function getUserSavedKey() {
+    return currentUser ? 'jobvaani_saved_jobs_' + currentUser.id : 'jobvaani_saved_jobs_guest';
+  }
+
+  let savedJobIds = new Set(JSON.parse(localStorage.getItem(getUserSavedKey()) || '[]'));
+  let currentTab = currentUser ? 'screen-home' : 'screen-login';
   let activeCategory = 'all';
   let searchQuery = '';
   let notifications = [...INITIAL_NOTIFICATIONS];
-  let currentUser = { ...INITIAL_USER };
 
   // DOM Elements Cache
   const viewport = document.getElementById('app-viewport');
@@ -181,6 +196,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Tab Navigation
   function switchTab(targetId) {
     currentTab = targetId;
+    const isAuth = targetId === 'screen-login' || targetId === 'screen-register';
+    const bottomNav = document.querySelector('.bottom-nav');
+    if (bottomNav) {
+      bottomNav.classList.toggle('auth-hidden', isAuth);
+    }
     screens.forEach(screen => {
       screen.classList.toggle('active', screen.id === targetId);
     });
@@ -430,6 +450,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Toggle Save Job
   function toggleSaveJob(jobId) {
+    if (!currentUser) {
+      showToast('Please sign in to save jobs.');
+      switchTab('screen-login');
+      return;
+    }
     if (savedJobIds.has(jobId)) {
       savedJobIds.delete(jobId);
       showToast('Removed from Saved Opportunities');
@@ -437,7 +462,7 @@ document.addEventListener('DOMContentLoaded', () => {
       savedJobIds.add(jobId);
       showToast('Saved! Automated deadline alerts active.');
     }
-    localStorage.setItem('jobvaani_saved_jobs', JSON.stringify([...savedJobIds]));
+    localStorage.setItem(getUserSavedKey(), JSON.stringify([...savedJobIds]));
     renderHeroAIJob();
     renderHomeJobs();
     renderSearchResults();
@@ -987,13 +1012,380 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  document.getElementById('item-settings-logout')?.addEventListener('click', () => {
-    if (confirm('Are you sure you want to log out of JobVaani?')) {
+  // 7. Authentication Flow & Multi-User Handlers
+  function hashString(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = ((hash << 5) - hash) + str.charCodeAt(i);
+      hash |= 0;
+    }
+    return Math.abs(hash).toString(16);
+  }
+
+  function updateProfileUI() {
+    const nameEl = document.getElementById('user-name-display');
+    const eduEl = document.getElementById('user-education-display');
+    const avatarEl = document.querySelector('#screen-profile [style*="border-radius:50%"]');
+    if (currentUser) {
+      if (nameEl) nameEl.textContent = currentUser.name;
+      if (eduEl) eduEl.textContent = `${currentUser.email} • ${currentUser.education || 'Graduate'}`;
+      if (avatarEl) {
+        const initials = currentUser.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        avatarEl.textContent = initials || 'JV';
+      }
+    } else {
+      if (nameEl) nameEl.textContent = 'Guest User';
+      if (eduEl) eduEl.textContent = 'Please log in';
+      if (avatarEl) avatarEl.textContent = 'G';
+    }
+  }
+
+  async function loginUser(email, password) {
+    const errorBanner = document.getElementById('login-error-banner');
+    const errorText = document.getElementById('login-error-text');
+    const submitBtn = document.getElementById('btn-login-submit');
+    const submitText = document.getElementById('login-submit-text');
+    const spinner = document.getElementById('login-spinner');
+
+    if (errorBanner) errorBanner.style.display = 'none';
+    if (submitBtn) submitBtn.disabled = true;
+    if (submitText) submitText.style.display = 'none';
+    if (spinner) spinner.style.display = 'inline-block';
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // 1. Attempt live backend first
+    try {
+      const resp = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: normalizedEmail, password }),
+      });
+      const data = await resp.json();
+      if (resp.ok && data.success && data.token) {
+        currentToken = data.token;
+        currentUser = data.user;
+        localStorage.setItem('jobvaani_auth_token', currentToken);
+        localStorage.setItem('jobvaani_current_user', JSON.stringify(currentUser));
+        savedJobIds = new Set(JSON.parse(localStorage.getItem(getUserSavedKey()) || '[]'));
+        if (currentUser.language) applyLanguage(currentUser.language);
+        updateProfileUI();
+        switchTab('screen-home');
+        showToast('Login successful! Welcome back.');
+        return;
+      } else if (!resp.ok) {
+        throw new Error(data.message || 'Incorrect email or password.');
+      }
+    } catch (apiErr) {
+      // 2. If backend is not running or returned error, check persistent multi-user registry
+      const registry = JSON.parse(localStorage.getItem('jobvaani_user_registry') || '{}');
+      if (registry[normalizedEmail]) {
+        const rec = registry[normalizedEmail];
+        if (rec.passwordHash === hashString(password) || rec.password === password) {
+          currentUser = {
+            id: rec.id,
+            name: rec.name,
+            email: rec.email,
+            phone: rec.phone || '',
+            language: rec.language || 'en',
+            education: 'Graduate Degree',
+            skills: ['Flutter', 'Python', 'Dart', 'Problem Solving'],
+            locations: ['Hyderabad', 'Bengaluru', 'Delhi NCR']
+          };
+          currentToken = 'jwt_' + rec.id + '_auth_' + Date.now();
+          localStorage.setItem('jobvaani_auth_token', currentToken);
+          localStorage.setItem('jobvaani_current_user', JSON.stringify(currentUser));
+          savedJobIds = new Set(JSON.parse(localStorage.getItem(getUserSavedKey()) || '[]'));
+          if (currentUser.language) applyLanguage(currentUser.language);
+          updateProfileUI();
+          switchTab('screen-home');
+          showToast('Login successful! Welcome back.');
+          if (submitBtn) submitBtn.disabled = false;
+          if (submitText) submitText.style.display = 'inline-block';
+          if (spinner) spinner.style.display = 'none';
+          return;
+        } else {
+          if (errorBanner) {
+            errorText.textContent = 'Incorrect email or password.';
+            errorBanner.style.display = 'flex';
+          }
+          if (submitBtn) submitBtn.disabled = false;
+          if (submitText) submitText.style.display = 'inline-block';
+          if (spinner) spinner.style.display = 'none';
+          return;
+        }
+      }
+
+      // 3. Demo account fallback
+      if (normalizedEmail === 'mowli@jobvaani.in' && password === 'Password@123') {
+        currentUser = {
+          id: 'usr_mowli_demo',
+          name: 'Mowli Kumar',
+          email: 'mowli@jobvaani.in',
+          phone: '+91 98765 43210',
+          language: 'en',
+          education: 'B.Tech in Computer Science & Engineering',
+          skills: ['Flutter', 'Dart', 'Cybersecurity', 'Cloud / AWS'],
+          locations: ['Hyderabad', 'Bengaluru', 'Delhi NCR']
+        };
+        currentToken = 'jwt_demo_token';
+        localStorage.setItem('jobvaani_auth_token', currentToken);
+        localStorage.setItem('jobvaani_current_user', JSON.stringify(currentUser));
+        savedJobIds = new Set(JSON.parse(localStorage.getItem(getUserSavedKey()) || '["job_cyber_sec_ops_05", "job_upsc_02"]'));
+        updateProfileUI();
+        switchTab('screen-home');
+        showToast('Login successful! Welcome back.');
+        if (submitBtn) submitBtn.disabled = false;
+        if (submitText) submitText.style.display = 'inline-block';
+        if (spinner) spinner.style.display = 'none';
+        return;
+      }
+
+      // Neither found in backend nor registry
+      if (errorBanner) {
+        errorText.textContent = apiErr.message && !apiErr.message.includes('fetch')
+          ? apiErr.message
+          : 'No account found with this email address.';
+        errorBanner.style.display = 'flex';
+      }
+    }
+
+    if (submitBtn) submitBtn.disabled = false;
+    if (submitText) submitText.style.display = 'inline-block';
+    if (spinner) spinner.style.display = 'none';
+  }
+
+  async function registerUser(name, email, password, confirmPassword, mobile, language) {
+    const errorBanner = document.getElementById('register-error-banner');
+    const errorText = document.getElementById('register-error-text');
+    const submitBtn = document.getElementById('btn-register-submit');
+    const submitText = document.getElementById('register-submit-text');
+    const spinner = document.getElementById('register-spinner');
+
+    if (errorBanner) errorBanner.style.display = 'none';
+
+    // Client Validation
+    if (!name || name.trim().length < 2) {
+      if (errorBanner) {
+        errorText.textContent = 'Full Name must be at least 2 characters.';
+        errorBanner.style.display = 'flex';
+      }
+      return;
+    }
+
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!email || !emailRegex.test(email.trim())) {
+      if (errorBanner) {
+        errorText.textContent = 'Please enter a valid email address.';
+        errorBanner.style.display = 'flex';
+      }
+      return;
+    }
+
+    if (!password || password.length < 6) {
+      if (errorBanner) {
+        errorText.textContent = 'Password must be at least 6 characters.';
+        errorBanner.style.display = 'flex';
+      }
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      if (errorBanner) {
+        errorText.textContent = 'Passwords do not match.';
+        errorBanner.style.display = 'flex';
+      }
+      return;
+    }
+
+    if (mobile && mobile.trim()) {
+      const cleaned = mobile.replace(/[\s\-+]/g, '');
+      if (cleaned.length < 10 || cleaned.length > 12) {
+        if (errorBanner) {
+          errorText.textContent = 'Please enter a valid 10-digit mobile number.';
+          errorBanner.style.display = 'flex';
+        }
+        return;
+      }
+    }
+
+    if (submitBtn) submitBtn.disabled = true;
+    if (submitText) submitText.style.display = 'none';
+    if (spinner) spinner.style.display = 'inline-block';
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // 1. Attempt live backend first
+    try {
+      const resp = await fetch('http://localhost:5000/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim(), email: normalizedEmail, password, mobile, language }),
+      });
+      const data = await resp.json();
+      if (resp.ok && data.success && data.token) {
+        currentToken = data.token;
+        currentUser = data.user;
+        localStorage.setItem('jobvaani_auth_token', currentToken);
+        localStorage.setItem('jobvaani_current_user', JSON.stringify(currentUser));
+        savedJobIds = new Set();
+        localStorage.setItem(getUserSavedKey(), JSON.stringify([]));
+        if (language) applyLanguage(language);
+        updateProfileUI();
+        switchTab('screen-home');
+        showToast('Account created successfully! Welcome to JobVaani.');
+        return;
+      } else if (resp.status === 409 || (data.message && data.message.includes('already exists'))) {
+        if (errorBanner) {
+          errorText.textContent = 'An account with this email already exists. Please login.';
+          errorBanner.style.display = 'flex';
+        }
+        if (submitBtn) submitBtn.disabled = false;
+        if (submitText) submitText.style.display = 'inline-block';
+        if (spinner) spinner.style.display = 'none';
+        return;
+      }
+    } catch (_) {}
+
+    // 2. Multi-user persistent local registry
+    const registry = JSON.parse(localStorage.getItem('jobvaani_user_registry') || '{}');
+    if (registry[normalizedEmail]) {
+      if (errorBanner) {
+        errorText.textContent = 'An account with this email already exists. Please login.';
+        errorBanner.style.display = 'flex';
+      }
+      if (submitBtn) submitBtn.disabled = false;
+      if (submitText) submitText.style.display = 'inline-block';
+      if (spinner) spinner.style.display = 'none';
+      return;
+    }
+
+    const userId = 'usr_' + hashString(normalizedEmail) + '_' + Date.now();
+    const token = 'jwt_' + userId + '_auth_' + Date.now();
+    currentUser = {
+      id: userId,
+      name: name.trim(),
+      email: normalizedEmail,
+      phone: mobile ? mobile.trim() : '',
+      language: language || 'en',
+      education: 'Graduate Degree',
+      skills: ['Flutter', 'Python', 'Dart', 'Cybersecurity'],
+      locations: ['Hyderabad', 'Bengaluru', 'Delhi NCR']
+    };
+
+    registry[normalizedEmail] = {
+      id: userId,
+      name: name.trim(),
+      email: normalizedEmail,
+      passwordHash: hashString(password),
+      phone: mobile ? mobile.trim() : '',
+      language: language || 'en',
+      createdAt: new Date().toISOString(),
+    };
+
+    localStorage.setItem('jobvaani_user_registry', JSON.stringify(registry));
+    localStorage.setItem('jobvaani_auth_token', token);
+    localStorage.setItem('jobvaani_current_user', JSON.stringify(currentUser));
+    currentToken = token;
+    savedJobIds = new Set();
+    localStorage.setItem(getUserSavedKey(), JSON.stringify([]));
+
+    if (language) applyLanguage(language);
+    updateProfileUI();
+    switchTab('screen-home');
+    showToast('Account created successfully! Welcome to JobVaani.');
+
+    if (submitBtn) submitBtn.disabled = false;
+    if (submitText) submitText.style.display = 'inline-block';
+    if (spinner) spinner.style.display = 'none';
+  }
+
+  function logoutUser() {
+    if (confirm('Are you sure you want to log out of JobVaani? You will need to log in again to access saved jobs.')) {
+      localStorage.removeItem('jobvaani_auth_token');
+      localStorage.removeItem('jobvaani_current_user');
+      currentUser = null;
+      currentToken = null;
+      savedJobIds = new Set();
+      updateProfileUI();
+      switchTab('screen-login');
       showToast('Logged out securely.');
+    }
+  }
+
+  // Auth UI Listeners
+  document.getElementById('btn-goto-register')?.addEventListener('click', () => switchTab('screen-register'));
+  document.getElementById('btn-goto-login')?.addEventListener('click', () => switchTab('screen-login'));
+  document.getElementById('btn-register-back')?.addEventListener('click', () => switchTab('screen-login'));
+
+  // Password Visibility Toggles
+  let obscureLoginPwd = true;
+  document.getElementById('btn-toggle-login-pwd')?.addEventListener('click', () => {
+    obscureLoginPwd = !obscureLoginPwd;
+    const pwdInput = document.getElementById('login-password');
+    const icon = document.getElementById('icon-toggle-login-pwd');
+    if (pwdInput) pwdInput.type = obscureLoginPwd ? 'password' : 'text';
+    if (icon) icon.textContent = obscureLoginPwd ? 'visibility' : 'visibility_off';
+  });
+
+  let obscureRegPwd = true;
+  document.getElementById('btn-toggle-reg-pwd')?.addEventListener('click', () => {
+    obscureRegPwd = !obscureRegPwd;
+    const pwdInput = document.getElementById('reg-password');
+    const icon = document.getElementById('icon-toggle-reg-pwd');
+    if (pwdInput) pwdInput.type = obscureRegPwd ? 'password' : 'text';
+    if (icon) icon.textContent = obscureRegPwd ? 'visibility' : 'visibility_off';
+  });
+
+  let obscureRegConfirmPwd = true;
+  document.getElementById('btn-toggle-reg-confirm-pwd')?.addEventListener('click', () => {
+    obscureRegConfirmPwd = !obscureRegConfirmPwd;
+    const pwdInput = document.getElementById('reg-confirm-pwd');
+    const icon = document.getElementById('icon-toggle-reg-confirm-pwd');
+    if (pwdInput) pwdInput.type = obscureRegConfirmPwd ? 'password' : 'text';
+    if (icon) icon.textContent = obscureRegConfirmPwd ? 'visibility' : 'visibility_off';
+  });
+
+  // Demo Credentials Button
+  document.getElementById('btn-fill-demo')?.addEventListener('click', () => {
+    const emailInput = document.getElementById('login-email');
+    const pwdInput = document.getElementById('login-password');
+    if (emailInput) emailInput.value = 'mowli@jobvaani.in';
+    if (pwdInput) pwdInput.value = 'Password@123';
+    const banner = document.getElementById('login-error-banner');
+    if (banner) banner.style.display = 'none';
+  });
+
+  // Forgot Password
+  document.getElementById('btn-forgot-pwd')?.addEventListener('click', () => {
+    const email = prompt('Enter your registered email address for password reset:');
+    if (email) {
+      alert(`If an account exists for ${email}, password reset instructions have been sent.`);
     }
   });
 
-  // 7. Notification Category Filters
+  // Forms Submission
+  document.getElementById('form-login')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = document.getElementById('login-email')?.value || '';
+    const pwd = document.getElementById('login-password')?.value || '';
+    loginUser(email, pwd);
+  });
+
+  document.getElementById('form-register')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = document.getElementById('reg-name')?.value || '';
+    const email = document.getElementById('reg-email')?.value || '';
+    const pwd = document.getElementById('reg-password')?.value || '';
+    const confirmPwd = document.getElementById('reg-confirm-pwd')?.value || '';
+    const mobile = document.getElementById('reg-mobile')?.value || '';
+    const lang = document.getElementById('reg-language')?.value || 'en';
+    registerUser(name, email, pwd, confirmPwd, mobile, lang);
+  });
+
+  document.getElementById('item-settings-logout')?.addEventListener('click', logoutUser);
+
+  // 8. Notification Category Filters
   document.querySelectorAll('#notif-category-chips .chip').forEach(chip => {
     chip.addEventListener('click', () => {
       document.querySelectorAll('#notif-category-chips .chip').forEach(c => c.classList.remove('active'));
@@ -1003,13 +1395,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // 8. FCM Simulator Buttons
+  // 9. FCM Simulator Buttons
   document.getElementById('btn-sim-match')?.addEventListener('click', () => simulateFCM('match'));
   document.getElementById('btn-sim-govt')?.addEventListener('click', () => simulateFCM('govt'));
   document.getElementById('btn-sim-deadline')?.addEventListener('click', () => simulateFCM('deadline'));
   document.getElementById('btn-sim-system')?.addEventListener('click', () => simulateFCM('system'));
 
-  // 9. Close Modal on Overlay Click
+  // 10. Close Modal on Overlay Click
   document.querySelectorAll('.modal-overlay').forEach(overlay => {
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) closeModals();
@@ -1019,5 +1411,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initial Boot
   applyTheme(isDarkMode);
   applyLanguage(currentLang);
-  switchTab('screen-home');
+  updateProfileUI();
+
+  if (currentUser && currentToken) {
+    switchTab('screen-home');
+  } else {
+    switchTab('screen-login');
+  }
 });

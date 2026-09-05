@@ -2,6 +2,8 @@ enum AuthErrorType {
   none,
   invalidCredentials,
   userNotFound,
+  emailAlreadyInUse,
+  weakPassword,
   serverUnavailable,
   noInternet,
   timeout,
@@ -14,6 +16,7 @@ class AuthUser {
   final String name;
   final String email;
   final String? phone;
+  final String language;
   final String? education;
   final List<String>? skills;
   final List<String>? locations;
@@ -23,6 +26,7 @@ class AuthUser {
     required this.name,
     required this.email,
     this.phone,
+    this.language = 'en',
     this.education,
     this.skills,
     this.locations,
@@ -30,10 +34,11 @@ class AuthUser {
 
   factory AuthUser.fromJson(Map<String, dynamic> json) {
     return AuthUser(
-      id: json['id']?.toString() ?? 'usr_${DateTime.now().millisecondsSinceEpoch}',
+      id: json['id']?.toString() ?? json['_id']?.toString() ?? 'usr_${DateTime.now().millisecondsSinceEpoch}',
       name: json['name'] as String? ?? 'Candidate',
       email: json['email'] as String? ?? '',
-      phone: json['phone'] as String?,
+      phone: json['phone'] as String? ?? json['mobile'] as String?,
+      language: json['language'] as String? ?? 'en',
       education: json['education'] as String?,
       skills: (json['skills'] as List<dynamic>?)?.map((e) => e.toString()).toList(),
       locations: (json['locations'] as List<dynamic>?)?.map((e) => e.toString()).toList(),
@@ -45,6 +50,7 @@ class AuthUser {
         'name': name,
         'email': email,
         if (phone != null) 'phone': phone,
+        'language': language,
         if (education != null) 'education': education,
         if (skills != null) 'skills': skills,
         if (locations != null) 'locations': locations,
@@ -107,7 +113,7 @@ class LoginResponse {
     );
   }
 
-  factory LoginResponse.mockSuccess(String email, {String? name}) {
+  factory LoginResponse.mockSuccess(String email, {String? name, String language = 'en'}) {
     final displayName = name ??
         (email.contains('@')
             ? email.split('@').first.replaceAll('.', ' ')
@@ -119,17 +125,92 @@ class LoginResponse {
     return LoginResponse(
       success: true,
       message: 'Login successful',
-      token: 'jwt_sec_tok_${DateTime.now().millisecondsSinceEpoch}_auth_prod',
+      token: 'jwt_sec_tok_${email.hashCode.abs()}_${DateTime.now().millisecondsSinceEpoch}',
       user: AuthUser(
         id: 'usr_${email.hashCode.abs()}',
         name: formattedName,
         email: email.trim().toLowerCase(),
+        language: language,
         phone: '+91 98765 43210',
         education: 'B.Tech in Computer Science & Engineering',
         skills: ['Flutter', 'Dart', 'Python', 'Cybersecurity', 'Cloud / AWS', 'SQL', 'Linux'],
         locations: ['Bengaluru', 'Hyderabad', 'Remote', 'Delhi NCR'],
       ),
       errorType: AuthErrorType.none,
+    );
+  }
+}
+
+class RegisterRequest {
+  final String name;
+  final String email;
+  final String password;
+  final String? mobile;
+  final String language;
+
+  const RegisterRequest({
+    required this.name,
+    required this.email,
+    required this.password,
+    this.mobile,
+    this.language = 'en',
+  });
+
+  Map<String, dynamic> toJson() => {
+        'name': name.trim(),
+        'email': email.trim().toLowerCase(),
+        'password': password,
+        if (mobile != null && mobile!.isNotEmpty) 'mobile': mobile!.trim(),
+        'language': language,
+      };
+}
+
+class RegisterResponse {
+  final bool success;
+  final String message;
+  final String? token;
+  final AuthUser? user;
+  final AuthErrorType errorType;
+
+  const RegisterResponse({
+    required this.success,
+    required this.message,
+    this.token,
+    this.user,
+    this.errorType = AuthErrorType.none,
+  });
+
+  factory RegisterResponse.fromJson(Map<String, dynamic> json) {
+    final success = json['success'] as bool? ?? false;
+    final message = json['message'] as String? ?? (success ? 'Account created successfully' : 'Registration failed');
+    final token = json['token'] as String?;
+    final userData = json['user'] as Map<String, dynamic>?;
+
+    return RegisterResponse(
+      success: success,
+      message: message,
+      token: token,
+      user: userData != null ? AuthUser.fromJson(userData) : null,
+      errorType: success ? AuthErrorType.none : AuthErrorType.unknown,
+    );
+  }
+
+  factory RegisterResponse.failure(
+    String message, {
+    AuthErrorType errorType = AuthErrorType.unknown,
+  }) {
+    return RegisterResponse(
+      success: false,
+      message: message,
+      errorType: errorType,
+    );
+  }
+
+  factory RegisterResponse.duplicateEmail([String? message]) {
+    return RegisterResponse(
+      success: false,
+      message: message ?? 'An account with this email already exists. Please login.',
+      errorType: AuthErrorType.emailAlreadyInUse,
     );
   }
 }
