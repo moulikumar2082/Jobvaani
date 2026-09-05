@@ -7,8 +7,6 @@ on:
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 concurrency:
   group: "pages"
@@ -21,27 +19,9 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Method 1: Deploy to gh-pages branch (compatible with default "Deploy from a branch")
       - name: Deploy to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./web
           keep_files: false
-
-      # Method 2: Native Pages Artifact (compatible if user selects "GitHub Actions")
-      - name: Setup Pages
-        id: pages
-        continue-on-error: true
-        uses: actions/configure-pages@v5
-
-      - name: Upload Web Artifact
-        if: steps.pages.outcome == 'success'
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: './web'
-
-      - name: Deploy to GitHub Pages
-        if: steps.pages.outcome == 'success'
-        id: deployment
-        uses: actions/deploy-pages@v4
