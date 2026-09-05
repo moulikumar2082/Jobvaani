@@ -1,11 +1,14 @@
 # JobVaani (జాబ్‌వాణి)
 > **“Every Opportunity, In Your Language.”**
 
+[![Vercel Deployment](https://img.shields.io/badge/Vercel-Live%20Hosted-000000?logo=vercel)](https://web-rho-three-79.vercel.app)
 [![Flutter](https://img.shields.io/badge/Flutter-v3.24-02569B?logo=flutter)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-v3.5-0175C2?logo=dart)](https://dart.dev)
 [![Material 3](https://img.shields.io/badge/Design-Material%203-7C3AED)](https://m3.material.io)
 [![Languages](https://img.shields.io/badge/Languages-4%20(EN%2C%20TE%2C%20HI%2C%20PA)-10B981)](#-multilingual-parity)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+🌐 **Live Web App:** **[https://web-rho-three-79.vercel.app](https://web-rho-three-79.vercel.app)**
 
 **JobVaani** is an Indian multilingual smart recruitment and government opportunity discovery platform. It bridges candidates across India with verified corporate technology positions and official government recruitment notices in **English**, **Telugu (తెలుగు)**, **Hindi (हिन्दी)**, and **Punjabi (ਪੰਜਾਬੀ)**.
 
