@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../data/models/auth_models.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/jobvaani_logo.dart';
@@ -23,6 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isGoogleLoading = false;
   bool _obscurePassword = true;
   bool _isSubmitted = false;
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -31,30 +33,70 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  Future<void> _submitLogin() async {
-    setState(() => _isSubmitted = true);
-    if (!_formKey.currentState!.validate()) return;
+  /// Maps typed authentication errors to localized user-friendly messages
+  String _mapErrorToMessage(AuthResult result, AppLocalizations l10n) {
+    switch (result.errorType) {
+      case AuthErrorType.invalidCredentials:
+        return l10n.invalidCredentials;
+      case AuthErrorType.userNotFound:
+        return l10n.errorUserNotFound;
+      case AuthErrorType.noInternet:
+        return l10n.errorNoInternet;
+      case AuthErrorType.serverUnavailable:
+        return l10n.errorServerUnavailable;
+      case AuthErrorType.timeout:
+        return l10n.errorTimeout;
+      case AuthErrorType.invalidResponse:
+      case AuthErrorType.unknown:
+      default:
+        return result.errorMessage?.isNotEmpty == true
+            ? result.errorMessage!
+            : l10n.errorGenericLogin;
+    }
+  }
 
+  Future<void> _submitLogin() async {
+    // 1. Trigger form validation
+    setState(() {
+      _isSubmitted = true;
+      _errorMessage = null;
+    });
+
+    if (!_formKey.currentState!.validate()) {
+      // Do not allow the login API to be called when validation fails
+      return;
+    }
+
+    // 2. Set loading state (disables button)
     setState(() => _isLoading = true);
     final auth = Provider.of<AuthProvider>(context, listen: false);
 
-    final success = await auth.login(
+    // 3. Delegate to authentication repository via AuthProvider
+    final result = await auth.login(
       _emailController.text.trim(),
       _passwordController.text,
     );
 
+    if (!mounted) return;
     setState(() => _isLoading = false);
 
-    if (success && mounted) {
-      Navigator.of(context).pushReplacement(
+    // 4. Handle result
+    if (result.isSuccess) {
+      // Prevent returning to Login using back button by clearing the navigation stack
+      Navigator.of(context).pushAndRemoveUntil(
         PageRouteBuilder(
           transitionDuration: const Duration(milliseconds: 350),
           pageBuilder: (_, __, ___) => const MainNavigationScreen(),
           transitionsBuilder: (_, a, __, c) => FadeTransition(opacity: a, child: c),
         ),
+        (route) => false,
       );
-    } else if (mounted) {
+    } else {
       final l10n = AppLocalizations.of(context)!;
+      final friendlyError = _mapErrorToMessage(result, l10n);
+
+      setState(() => _errorMessage = friendlyError);
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
@@ -63,7 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  l10n.invalidCredentials,
+                  friendlyError,
                   style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                 ),
               ),
@@ -79,200 +121,27 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _submitGoogleLogin() async {
-    setState(() => _isGoogleLoading = true);
-    final auth = Provider.of<AuthProvider>(context, listen: false);
+    setState(() {
+      _isGoogleLoading = true;
+      _errorMessage = null;
+    });
 
+    final auth = Provider.of<AuthProvider>(context, listen: false);
     final success = await auth.loginWithGoogle();
+
+    if (!mounted) return;
     setState(() => _isGoogleLoading = false);
 
-    if (success && mounted) {
-      Navigator.of(context).pushReplacement(
+    if (success) {
+      Navigator.of(context).pushAndRemoveUntil(
         PageRouteBuilder(
           transitionDuration: const Duration(milliseconds: 350),
           pageBuilder: (_, __, ___) => const MainNavigationScreen(),
           transitionsBuilder: (_, a, __, c) => FadeTransition(opacity: a, child: c),
         ),
+        (route) => false,
       );
     }
-  }
-
-  void _showForgotPasswordModal(BuildContext context, AppLocalizations l10n, bool isDark) {
-    final resetEmailController = TextEditingController(text: _emailController.text.trim());
-    final resetFormKey = GlobalKey<FormState>();
-    bool isSubmittingReset = false;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (modalContext) {
-        return StatefulBuilder(
-          builder: (ctx, setModalState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                left: 24,
-                right: 24,
-                top: 24,
-                bottom: MediaQuery.of(modalContext).viewInsets.bottom + 24,
-              ),
-              child: Form(
-                key: resetFormKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 44,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        Container(
-                          width: 42,
-                          height: 42,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1E3A8A).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.lock_reset_rounded,
-                            color: Color(0xFF1E3A8A),
-                            size: 24,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Text(
-                            l10n.resetPasswordTitle,
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      l10n.resetPasswordSubtitle,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                        height: 1.4,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      l10n.email,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: resetEmailController,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: InputDecoration(
-                        hintText: l10n.emailHint,
-                        prefixIcon: const Icon(Icons.mail_outline_rounded, size: 20),
-                      ),
-                      validator: (val) {
-                        if (val == null || val.trim().isEmpty) {
-                          return l10n.errorPleaseEnterEmail;
-                        }
-                        final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
-                        if (!emailRegex.hasMatch(val.trim())) {
-                          return l10n.errorPleaseEnterValidEmail;
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 24),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => Navigator.of(modalContext).pop(),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                            child: Text(l10n.cancel),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          flex: 2,
-                          child: ElevatedButton(
-                            onPressed: isSubmittingReset
-                                ? null
-                                : () async {
-                                    if (!resetFormKey.currentState!.validate()) return;
-                                    setModalState(() => isSubmittingReset = true);
-                                    final auth = Provider.of<AuthProvider>(context, listen: false);
-                                    await auth.sendPasswordReset(resetEmailController.text.trim());
-                                    setModalState(() => isSubmittingReset = false);
-                                    if (mounted) {
-                                      Navigator.of(modalContext).pop();
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Row(
-                                            children: [
-                                              const Icon(Icons.check_circle_outline_rounded,
-                                                  color: Colors.white, size: 20),
-                                              const SizedBox(width: 12),
-                                              Expanded(child: Text(l10n.resetLinkSent)),
-                                            ],
-                                          ),
-                                          backgroundColor: const Color(0xFF0D9488),
-                                          behavior: SnackBarBehavior.floating,
-                                          shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(10)),
-                                        ),
-                                      );
-                                    }
-                                  },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF1E3A8A),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                            child: isSubmittingReset
-                                ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                                  )
-                                : Text(
-                                    l10n.sendResetLink,
-                                    style: const TextStyle(fontWeight: FontWeight.w700),
-                                  ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
   }
 
   @override
@@ -285,6 +154,7 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
             child: Form(
               key: _formKey,
@@ -294,6 +164,7 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Logo
                   Center(
                     child: JobVaaniLogo(
                       size: 64,
@@ -303,6 +174,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 24),
 
+                  // Title & Subtitle
                   Text(
                     l10n.loginTitle,
                     style: TextStyle(
@@ -320,7 +192,46 @@ class _LoginScreenState extends State<LoginScreen> {
                       color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 24),
+
+                  // In-Form Error Banner
+                  if (_errorMessage != null) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDC2626).withOpacity(isDark ? 0.18 : 0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: const Color(0xFFDC2626).withOpacity(0.4),
+                          width: 1.2,
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.error_outline_rounded,
+                            color: Color(0xFFDC2626),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              _errorMessage!,
+                              style: TextStyle(
+                                fontSize: 13,
+                                height: 1.4,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? const Color(0xFFFCA5A5) : const Color(0xFFB91C1C),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                  ],
 
                   // Email Field
                   Text(
@@ -336,6 +247,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
+                    enabled: !_isLoading,
+                    onChanged: (_) {
+                      if (_errorMessage != null) {
+                        setState(() => _errorMessage = null);
+                      }
+                    },
                     decoration: InputDecoration(
                       hintText: l10n.emailHint,
                       prefixIcon: const Icon(Icons.mail_outline_rounded, size: 20),
@@ -344,7 +261,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       if (val == null || val.trim().isEmpty) {
                         return l10n.errorPleaseEnterEmail;
                       }
-                      final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+                      final emailRegex =
+                          RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
                       if (!emailRegex.hasMatch(val.trim())) {
                         return l10n.errorPleaseEnterValidEmail;
                       }
@@ -367,16 +285,25 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: _passwordController,
                     obscureText: _obscurePassword,
                     textInputAction: TextInputAction.done,
-                    onFieldSubmitted: (_) => _submitLogin(),
+                    enabled: !_isLoading,
+                    onFieldSubmitted: (_) => _isLoading ? null : _submitLogin(),
+                    onChanged: (_) {
+                      if (_errorMessage != null) {
+                        setState(() => _errorMessage = null);
+                      }
+                    },
                     decoration: InputDecoration(
                       hintText: l10n.passwordHint,
                       prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                          _obscurePassword
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
                           size: 20,
                         ),
-                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                        onPressed: () =>
+                            setState(() => _obscurePassword = !_obscurePassword),
                       ),
                     ),
                     validator: (val) {
@@ -390,19 +317,21 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
 
-                  // Forgot Password Action
+                  // Forgot Password Action Link
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => ForgotPasswordScreen(
-                              initialEmail: _emailController.text.trim(),
-                            ),
-                          ),
-                        );
-                      },
+                      onPressed: _isLoading
+                          ? null
+                          : () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => ForgotPasswordScreen(
+                                    initialEmail: _emailController.text.trim(),
+                                  ),
+                                ),
+                              );
+                            },
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
                       ),
@@ -418,7 +347,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Login Button Action
+                  // Login Button Action (Disabled while request is running)
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -426,19 +355,40 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF1E3A8A),
                         foregroundColor: Colors.white,
+                        disabledBackgroundColor: const Color(0xFF1E3A8A).withOpacity(0.6),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         elevation: 0,
                       ),
                       child: _isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          ? Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2.2,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  l10n.loggingIn,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
                             )
                           : Text(
                               l10n.loginButton,
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                     ),
                   ),
@@ -475,11 +425,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Optional: Continue with Google
+                  // Continue with Google
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton(
-                      onPressed: _isGoogleLoading ? null : _submitGoogleLogin,
+                      onPressed: (_isLoading || _isGoogleLoading) ? null : _submitGoogleLogin,
                       style: OutlinedButton.styleFrom(
                         backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
                         foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -513,16 +463,19 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Quick Demo Autofill Hint
+                  // Demo Credentials Helper Button
                   Center(
                     child: TextButton(
-                      onPressed: () {
-                        _emailController.text = 'mowli@jobvaani.in';
-                        _passwordController.text = 'Password@123';
-                      },
-                      child: const Text(
-                        '⚡ Fill Demo Candidate Credentials',
-                        style: TextStyle(
+                      onPressed: _isLoading
+                          ? null
+                          : () {
+                              _emailController.text = 'mowli@jobvaani.in';
+                              _passwordController.text = 'Password@123';
+                              setState(() => _errorMessage = null);
+                            },
+                      child: Text(
+                        l10n.fillDemoCredentials,
+                        style: const TextStyle(
                           fontSize: 13,
                           color: Color(0xFF2563EB),
                           fontWeight: FontWeight.w600,
@@ -530,10 +483,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 12),
 
-                  // Create Account Action Link
+                  // Register Link
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -545,11 +497,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       TextButton(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const RegisterScreen()),
-                          );
-                        },
+                        onPressed: _isLoading
+                            ? null
+                            : () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                                );
+                              },
                         child: Text(
                           l10n.createAccount,
                           style: const TextStyle(

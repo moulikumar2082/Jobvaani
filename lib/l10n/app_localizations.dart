@@ -405,6 +405,14 @@ abstract class AppLocalizations {
   String get logoutConfirmTitle;
   String get logoutConfirmMessage;
   String get logoutSubtitle;
+  String get errorNoInternet;
+  String get errorServerUnavailable;
+  String get errorTimeout;
+  String get errorUserNotFound;
+  String get errorGenericLogin;
+  String get loginSuccessful;
+  String get loggingIn;
+  String get fillDemoCredentials;
 }
 
 class AppLocalizationsEn extends AppLocalizations {
@@ -791,6 +799,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override String get logoutConfirmTitle => "Log Out";
   @override String get logoutConfirmMessage => "Are you sure you want to log out of JobVaani? You will need to log in again to access saved jobs and notifications.";
   @override String get logoutSubtitle => "Sign out of your candidate account";
+  @override String get errorNoInternet => "Unable to connect to the server. Please check your internet connection.";
+  @override String get errorServerUnavailable => "Server is currently unavailable. Please try again later.";
+  @override String get errorTimeout => "Connection timed out. Please try again.";
+  @override String get errorUserNotFound => "No account found with this email address.";
+  @override String get errorGenericLogin => "Something went wrong while logging in. Please try again.";
+  @override String get loginSuccessful => "Login successful! Welcome back.";
+  @override String get loggingIn => "Signing in...";
+  @override String get fillDemoCredentials => "⚡ Fill Demo Candidate Credentials";
 }
 
 class AppLocalizationsTe extends AppLocalizations {
@@ -1177,6 +1193,14 @@ class AppLocalizationsTe extends AppLocalizations {
   @override String get logoutConfirmTitle => "లాగ్ అవుట్";
   @override String get logoutConfirmMessage => "మీరు ఖచ్చితంగా JobVaani నుండి లాగ్ అవుట్ అవ్వాలనుకుంటున్నారా?";
   @override String get logoutSubtitle => "మీ ఖాతా నుండి నిష్క్రమించండి";
+  @override String get errorNoInternet => "సర్వర్‌కు కనెక్ట్ కాలేకపోతున్నాము. దయచేసి మీ ఇంటర్నెట్ కనెక్షన్‌ని తనిఖీ చేయండి.";
+  @override String get errorServerUnavailable => "సర్వర్ ప్రస్తుతం అందుబాటులో లేదు. దయచేసి కాసేపటి తర్వాత ప్రయత్నించండి.";
+  @override String get errorTimeout => "కనెక్షన్ సమయం ముగిసింది. దయచేసి మళ్లీ ప్రయత్నించండి.";
+  @override String get errorUserNotFound => "ఈ ఇమెయిల్ చిరునామాతో ఖాతా ఏదీ కనుగొనబడలేదు.";
+  @override String get errorGenericLogin => "లాగిన్ చేస్తున్నప్పుడు ఏదో తప్పు జరిగింది. దయచేసి మళ్లీ ప్రయత్నించండి.";
+  @override String get loginSuccessful => "లాగిన్ విజయవంతమైంది! తిరిగి స్వాగతం.";
+  @override String get loggingIn => "సైన్ ఇన్ చేస్తోంది...";
+  @override String get fillDemoCredentials => "⚡ డెమో అభ్యర్థి వివరాలను పూరించండి";
 }
 
 class AppLocalizationsHi extends AppLocalizations {
@@ -1563,6 +1587,14 @@ class AppLocalizationsHi extends AppLocalizations {
   @override String get logoutConfirmTitle => "लॉग आउट";
   @override String get logoutConfirmMessage => "क्या आप वाकई JobVaani से लॉग आउट करना चाहते हैं?";
   @override String get logoutSubtitle => "अपने उम्मीदवार खाते से साइन आउट करें";
+  @override String get errorNoInternet => "सर्वर से कनेक्ट करने में असमर्थ। कृपया अपना इंटरनेट कनेक्शन जांचें।";
+  @override String get errorServerUnavailable => "सर्वर वर्तमान में अनुपलब्ध है। कृपया बाद में पुनः प्रयास करें।";
+  @override String get errorTimeout => "कनेक्शन टाइम आउट हो गया। कृपया पुनः प्रयास करें।";
+  @override String get errorUserNotFound => "इस ईमेल पते के साथ कोई खाता नहीं मिला।";
+  @override String get errorGenericLogin => "लॉग इन करते समय कुछ गलत हो गया। कृपया पुनः प्रयास करें।";
+  @override String get loginSuccessful => "लॉगिन सफल रहा! पुनः स्वागत है।";
+  @override String get loggingIn => "साइन इन हो रहा है...";
+  @override String get fillDemoCredentials => "⚡ डेमो उम्मीदवार विवरण भरें";
 }
 
 class AppLocalizationsPa extends AppLocalizations {
@@ -1949,6 +1981,14 @@ class AppLocalizationsPa extends AppLocalizations {
   @override String get logoutConfirmTitle => "ਲਾਗ ਆਉਟ";
   @override String get logoutConfirmMessage => "ਕੀ ਤੁਸੀਂ ਯਕੀਨਨ JobVaani ਤੋਂ ਲਾਗ ਆਉਟ ਕਰਨਾ ਚਾਹੁੰਦੇ ਹੋ?";
   @override String get logoutSubtitle => "ਆਪਣੇ ਉਮੀਦਵਾਰ ਖਾਤੇ ਤੋਂ ਸਾਈਨ ਆਉਟ ਕਰੋ";
+  @override String get errorNoInternet => "ਸਰਵਰ ਨਾਲ ਜੁੜਨ ਵਿੱਚ ਅਸਮਰੱਥ। ਕਿਰਪਾ ਕਰਕੇ ਆਪਣਾ ਇੰਟਰਨੈਟ ਕਨੈਕਸ਼ਨ ਜਾਂਚੋ।";
+  @override String get errorServerUnavailable => "ਸਰਵਰ ਇਸ ਵੇਲੇ ਅਣਉਪਲਬਧ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਬਾਅਦ ਵਿੱਚ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।";
+  @override String get errorTimeout => "ਕਨੈਕਸ਼ਨ ਦਾ ਸਮਾਂ ਸਮਾਪਤ ਹੋ ਗਿਆ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।";
+  @override String get errorUserNotFound => "ਇਸ ਈਮੇਲ ਪਤੇ ਨਾਲ ਕੋਈ ਖਾਤਾ ਨਹੀਂ ਮਿਲਿਆ।";
+  @override String get errorGenericLogin => "ਲਾਗਇਨ ਕਰਨ ਦੌਰਾਨ ਕੁਝ ਗਲਤ ਹੋ ਗਿਆ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।";
+  @override String get loginSuccessful => "ਲਾਗਇਨ ਸਫਲ ਰਿਹਾ! ਦੁਬਾਰਾ ਜੀ ਆਇਆਂ ਨੂੰ।";
+  @override String get loggingIn => "ਸਾਈਨ ਇਨ ਹੋ ਰਿਹਾ ਹੈ...";
+  @override String get fillDemoCredentials => "⚡ ਡੈਮੋ ਉਮੀਦਵਾਰ ਦੇ ਵੇਰਵੇ ਭਰੋ";
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

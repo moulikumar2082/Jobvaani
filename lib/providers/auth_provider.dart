@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../data/models/auth_models.dart';
 import '../data/repositories/auth_repository.dart';
+import '../services/secure_storage_service.dart';
 
 class AuthProvider with ChangeNotifier {
   static const String _tokenKey = 'jobvaani_auth_token';
@@ -26,11 +27,13 @@ class AuthProvider with ChangeNotifier {
   static const String _notifRecommendationsKey = 'jobvaani_notif_recommendations';
 
   final IAuthRepository _authRepository;
+  final ISecureStorageService _secureStorage;
 
-  bool _isAuthenticated = true;
-  String? _token = 'jwt_demo_token';
-  String _userName = 'Mowli Kumar';
-  String _userEmail = 'mowlikumar@gmail.com';
+  // Unauthenticated by default until token verification succeeds
+  bool _isAuthenticated = false;
+  String? _token;
+  String _userName = 'Job Seeker';
+  String _userEmail = '';
   String _userPhone = '+91 98765 43210';
   String _education = 'B.Tech in Computer Science & Engineering';
   String _college = 'National Institute of Technology';
@@ -73,17 +76,23 @@ class AuthProvider with ChangeNotifier {
   bool get notifDeadlines => _notifDeadlines;
   bool get notifRecommendations => _notifRecommendations;
 
-  AuthProvider({IAuthRepository? authRepository})
-      : _authRepository = authRepository ?? AuthRepository() {
+  AuthProvider({
+    IAuthRepository? authRepository,
+    ISecureStorageService? secureStorage,
+  })  : _authRepository = authRepository ?? AuthRepository(),
+        _secureStorage = secureStorage ?? SecureStorageService() {
     checkAuthState();
   }
 
+  /// Verifies secure token storage on startup
   Future<void> checkAuthState() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final savedToken = prefs.getString(_tokenKey);
+      final savedToken = await _secureStorage.getToken();
       if (savedToken != null && savedToken.isNotEmpty) {
         _token = savedToken;
+        _isAuthenticated = true;
+
+        final prefs = await SharedPreferences.getInstance();
         _userName = prefs.getString(_userNameKey) ?? _userName;
         _userEmail = prefs.getString(_userEmailKey) ?? _userEmail;
         _userPhone = prefs.getString(_userPhoneKey) ?? _userPhone;
@@ -103,40 +112,57 @@ class AuthProvider with ChangeNotifier {
         _notifJobMatches = prefs.getBool(_notifMatchesKey) ?? true;
         _notifDeadlines = prefs.getBool(_notifDeadlinesKey) ?? true;
         _notifRecommendations = prefs.getBool(_notifRecommendationsKey) ?? true;
-        _isAuthenticated = true;
+
+        notifyListeners();
+      } else {
+        _isAuthenticated = false;
+        _token = null;
         notifyListeners();
       }
-    } catch (_) {}
+    } catch (_) {
+      _isAuthenticated = false;
+      _token = null;
+    }
   }
 
-  Future<bool> login(String email, String password) async {
-    await Future.delayed(const Duration(milliseconds: 600));
-    if (email.trim().isEmpty || password.length < 6) {
-      return false;
+  /// Sends login request through AuthRepository with validation and secure token storage
+  Future<AuthResult> login(String email, String password) async {
+    final result = await _authRepository.login(email, password);
+
+    if (result.isSuccess && result.token != null) {
+      _isAuthenticated = true;
+      _token = result.token;
+
+      if (result.user != null) {
+        _userName = result.user!.name;
+        _userEmail = result.user!.email;
+        if (result.user!.phone != null) _userPhone = result.user!.phone!;
+        if (result.user!.education != null) _education = result.user!.education!;
+        if (result.user!.skills != null) _skills = result.user!.skills!;
+        if (result.user!.locations != null) _preferredLocations = result.user!.locations!;
+      }
+
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_tokenKey, _token!);
+        await prefs.setString(_userNameKey, _userName);
+        await prefs.setString(_userEmailKey, _userEmail);
+      } catch (_) {}
+
+      notifyListeners();
     }
 
-    _isAuthenticated = true;
-    _token = 'jwt_token_${DateTime.now().millisecondsSinceEpoch}';
-    _userName = email.contains('@') ? email.split('@').first : 'Candidate';
-    _userEmail = email;
-
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_tokenKey, _token!);
-      await prefs.setString(_userNameKey, _userName);
-      await prefs.setString(_userEmailKey, _userEmail);
-    } catch (_) {}
-
-    notifyListeners();
-    return true;
+    return result;
   }
 
   Future<bool> loginWithGoogle() async {
     await Future.delayed(const Duration(milliseconds: 700));
     _isAuthenticated = true;
     _token = 'google_oauth_${DateTime.now().millisecondsSinceEpoch}';
-    _userName = 'Job Seeker';
-    _userEmail = 'seeker@jobvaani.in';
+    _userName = 'Mowli Kumar';
+    _userEmail = 'mowlikumar@gmail.com';
+
+    await _secureStorage.saveToken(_token!);
 
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -150,83 +176,40 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<ForgotPasswordResponse> sendPasswordReset(String email) async {
-    return await _authRepository.sendPasswordReset(email);
-  }
-
-  Future<bool> register(
-    String name,
-    String email,
-    String password, {
-    String? phone,
-  }) async {
-    await Future.delayed(const Duration(milliseconds: 600));
-    _isAuthenticated = true;
-    _token = 'jwt_token_${DateTime.now().millisecondsSinceEpoch}';
-    _userName = name.isNotEmpty ? name : 'Candidate';
-    _userEmail = email;
-    _userPhone = phone ?? '';
-
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_tokenKey, _token!);
-      await prefs.setString(_userNameKey, _userName);
-      await prefs.setString(_userEmailKey, _userEmail);
-      if (phone != null && phone.isNotEmpty) {
-        await prefs.setString(_userPhoneKey, phone);
-      }
-    } catch (_) {}
-
-    notifyListeners();
-    return true;
+    return _authRepository.sendPasswordReset(email);
   }
 
   Future<void> updateProfile({
-    String? education,
-    List<String>? skills,
-    List<String>? locations,
-    List<String>? categories,
-  }) async {
-    if (education != null) _education = education;
-    if (skills != null) _skills = skills;
-    if (locations != null) _preferredLocations = locations;
-    if (categories != null) _jobCategories = categories;
-    _isProfileCompleted = true;
-
-    notifyListeners();
-
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      if (education != null) await prefs.setString(_educationKey, education);
-      if (skills != null) await prefs.setStringList(_skillsKey, skills);
-      if (locations != null) await prefs.setStringList(_locationsKey, locations);
-      if (categories != null) await prefs.setStringList(_categoriesKey, categories);
-      await prefs.setBool(_profileCompletedKey, true);
-    } catch (_) {}
-  }
-
-  Future<void> updateProfileDetails({
     String? name,
-    String? email,
     String? phone,
     String? education,
+    String? college,
+    String? graduationYear,
+    String? experience,
   }) async {
     if (name != null) _userName = name;
-    if (email != null) _userEmail = email;
     if (phone != null) _userPhone = phone;
     if (education != null) _education = education;
+    if (college != null) _college = college;
+    if (graduationYear != null) _graduationYear = graduationYear;
+    if (experience != null) _experience = experience;
+    _isProfileCompleted = true;
     notifyListeners();
 
     try {
       final prefs = await SharedPreferences.getInstance();
       if (name != null) await prefs.setString(_userNameKey, name);
-      if (email != null) await prefs.setString(_userEmailKey, email);
       if (phone != null) await prefs.setString(_userPhoneKey, phone);
       if (education != null) await prefs.setString(_educationKey, education);
+      if (college != null) await prefs.setString(_collegeKey, college);
+      if (graduationYear != null) await prefs.setString(_gradYearKey, graduationYear);
+      if (experience != null) await prefs.setString(_experienceKey, experience);
+      await prefs.setBool(_profileCompletedKey, true);
     } catch (_) {}
   }
 
   Future<void> updateSkills(List<String> newSkills) async {
-    _skills = List<String>.from(newSkills);
+    _skills = List.from(newSkills);
     notifyListeners();
 
     try {
@@ -239,10 +222,12 @@ class AuthProvider with ChangeNotifier {
     List<String>? locations,
     List<String>? categories,
     List<String>? jobTypes,
+    double? minSalary,
   }) async {
-    if (locations != null) _preferredLocations = List<String>.from(locations);
-    if (categories != null) _jobCategories = List<String>.from(categories);
-    if (jobTypes != null) _preferredJobTypes = List<String>.from(jobTypes);
+    if (locations != null) _preferredLocations = List.from(locations);
+    if (categories != null) _jobCategories = List.from(categories);
+    if (jobTypes != null) _preferredJobTypes = List.from(jobTypes);
+    if (minSalary != null) _minSalaryLpa = minSalary;
     notifyListeners();
 
     try {
@@ -250,89 +235,52 @@ class AuthProvider with ChangeNotifier {
       if (locations != null) await prefs.setStringList(_locationsKey, _preferredLocations);
       if (categories != null) await prefs.setStringList(_categoriesKey, _jobCategories);
       if (jobTypes != null) await prefs.setStringList(_jobTypesKey, _preferredJobTypes);
+      if (minSalary != null) await prefs.setDouble(_minSalaryKey, _minSalaryLpa);
     } catch (_) {}
   }
 
   Future<void> updateJobPreferencesFull({
-    required List<String> categories,
-    required List<String> locations,
-    required List<String> jobTypes,
-    required double minSalaryLpa,
-    required String experienceLevel,
-    required List<String> govtCategories,
-    required bool notifGovtAlerts,
-    required bool notifJobMatches,
-    required bool notifDeadlines,
-    required bool notifRecommendations,
+    List<String>? locations,
+    List<String>? categories,
+    List<String>? jobTypes,
+    double? minSalary,
+    String? experience,
+    List<String>? govtCategories,
+    bool? govtAlerts,
+    bool? jobMatches,
+    bool? deadlines,
+    bool? recommendations,
   }) async {
-    _jobCategories = List<String>.from(categories);
-    _preferredLocations = List<String>.from(locations);
-    _preferredJobTypes = List<String>.from(jobTypes);
-    _minSalaryLpa = minSalaryLpa;
-    _experience = experienceLevel;
-    _preferredGovtCategories = List<String>.from(govtCategories);
-    _notifGovtAlerts = notifGovtAlerts;
-    _notifJobMatches = notifJobMatches;
-    _notifDeadlines = notifDeadlines;
-    _notifRecommendations = notifRecommendations;
+    if (locations != null) _preferredLocations = List.from(locations);
+    if (categories != null) _jobCategories = List.from(categories);
+    if (jobTypes != null) _preferredJobTypes = List.from(jobTypes);
+    if (minSalary != null) _minSalaryLpa = minSalary;
+    if (experience != null) _experience = experience;
+    if (govtCategories != null) _preferredGovtCategories = List.from(govtCategories);
+    if (govtAlerts != null) _notifGovtAlerts = govtAlerts;
+    if (jobMatches != null) _notifJobMatches = jobMatches;
+    if (deadlines != null) _notifDeadlines = deadlines;
+    if (recommendations != null) _notifRecommendations = recommendations;
     notifyListeners();
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList(_categoriesKey, _jobCategories);
-      await prefs.setStringList(_locationsKey, _preferredLocations);
-      await prefs.setStringList(_jobTypesKey, _preferredJobTypes);
-      await prefs.setDouble(_minSalaryKey, _minSalaryLpa);
-      await prefs.setString(_experienceKey, _experience);
-      await prefs.setStringList(_govtCategoriesKey, _preferredGovtCategories);
-      await prefs.setBool(_notifGovtKey, _notifGovtAlerts);
-      await prefs.setBool(_notifMatchesKey, _notifJobMatches);
-      await prefs.setBool(_notifDeadlinesKey, _notifDeadlines);
-      await prefs.setBool(_notifRecommendationsKey, _notifRecommendations);
+      if (locations != null) await prefs.setStringList(_locationsKey, _preferredLocations);
+      if (categories != null) await prefs.setStringList(_categoriesKey, _jobCategories);
+      if (jobTypes != null) await prefs.setStringList(_jobTypesKey, _preferredJobTypes);
+      if (minSalary != null) await prefs.setDouble(_minSalaryKey, _minSalaryLpa);
+      if (experience != null) await prefs.setString(_experienceKey, _experience);
+      if (govtCategories != null) await prefs.setStringList(_govtCategoriesKey, _preferredGovtCategories);
+      if (govtAlerts != null) await prefs.setBool(_notifGovtKey, _notifGovtAlerts);
+      if (jobMatches != null) await prefs.setBool(_notifMatchesKey, _notifJobMatches);
+      if (deadlines != null) await prefs.setBool(_notifDeadlinesKey, _notifDeadlines);
+      if (recommendations != null) await prefs.setBool(_notifRecommendationsKey, _notifRecommendations);
     } catch (_) {}
   }
 
-  Future<void> updateFullProfile({
-    required String name,
-    required String qualification,
-    required String college,
-    required String graduationYear,
-    required List<String> skills,
-    required String experience,
-    required List<String> preferredLocations,
-    required List<String> preferredCategories,
-    required List<String> preferredJobTypes,
-  }) async {
-    _userName = name;
-    _education = qualification;
-    _college = college;
-    _graduationYear = graduationYear;
-    _skills = List<String>.from(skills);
-    _experience = experience;
-    _preferredLocations = List<String>.from(preferredLocations);
-    _jobCategories = List<String>.from(preferredCategories);
-    _preferredJobTypes = List<String>.from(preferredJobTypes);
-    _isProfileCompleted = true;
-    notifyListeners();
-
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_userNameKey, name);
-      await prefs.setString(_educationKey, qualification);
-      await prefs.setString(_collegeKey, college);
-      await prefs.setString(_gradYearKey, graduationYear);
-      await prefs.setStringList(_skillsKey, _skills);
-      await prefs.setString(_experienceKey, experience);
-      await prefs.setStringList(_locationsKey, _preferredLocations);
-      await prefs.setStringList(_categoriesKey, _jobCategories);
-      await prefs.setStringList(_jobTypesKey, _preferredJobTypes);
-      await prefs.setBool(_profileCompletedKey, true);
-    } catch (_) {}
-  }
-
-  Future<void> uploadResume(String fileName) async {
+  Future<void> updateResume(String fileName, {DateTime? uploadedAt}) async {
     _resumeFileName = fileName;
-    _resumeUploadedAt = DateTime.now();
+    _resumeUploadedAt = uploadedAt ?? DateTime.now();
     notifyListeners();
 
     try {
@@ -384,6 +332,8 @@ class AuthProvider with ChangeNotifier {
     _preferredLocations = [];
     _jobCategories = [];
     _isProfileCompleted = false;
+
+    await _secureStorage.clearAll();
 
     try {
       final prefs = await SharedPreferences.getInstance();

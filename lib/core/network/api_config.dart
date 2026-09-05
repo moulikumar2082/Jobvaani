@@ -37,6 +37,10 @@ class ApiConfig {
   static const Duration connectTimeout = Duration(seconds: 10);
   static const Duration receiveTimeout = Duration(seconds: 15);
 
+  // Development & Mock Configuration
+  // When true and live backend is offline or unreachable, allows graceful development preview
+  static const bool enableMockFallbackWhenOffline = true;
+
   // Standard JSON Headers
   static Map<String, String> defaultHeaders({String? token}) {
     return {

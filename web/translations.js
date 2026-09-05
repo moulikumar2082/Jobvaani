@@ -380,7 +380,15 @@ const APP_TRANSLATIONS = {
     "supportEmailLabel": "Direct Support Email",
     "logoutConfirmTitle": "Log Out",
     "logoutConfirmMessage": "Are you sure you want to log out of JobVaani? You will need to log in again to access saved jobs and notifications.",
-    "logoutSubtitle": "Sign out of your candidate account"
+    "logoutSubtitle": "Sign out of your candidate account",
+    "errorNoInternet": "Unable to connect to the server. Please check your internet connection.",
+    "errorServerUnavailable": "Server is currently unavailable. Please try again later.",
+    "errorTimeout": "Connection timed out. Please try again.",
+    "errorUserNotFound": "No account found with this email address.",
+    "errorGenericLogin": "Something went wrong while logging in. Please try again.",
+    "loginSuccessful": "Login successful! Welcome back.",
+    "loggingIn": "Signing in...",
+    "fillDemoCredentials": "⚡ Fill Demo Candidate Credentials"
   },
   "te": {
     "appName": "జాబ్‌వాణి",
@@ -763,7 +771,15 @@ const APP_TRANSLATIONS = {
     "supportEmailLabel": "ప్రత్యక్ష మద్దతు ఇమెయిల్",
     "logoutConfirmTitle": "లాగ్ అవుట్",
     "logoutConfirmMessage": "మీరు ఖచ్చితంగా JobVaani నుండి లాగ్ అవుట్ అవ్వాలనుకుంటున్నారా?",
-    "logoutSubtitle": "మీ ఖాతా నుండి నిష్క్రమించండి"
+    "logoutSubtitle": "మీ ఖాతా నుండి నిష్క్రమించండి",
+    "errorNoInternet": "సర్వర్‌కు కనెక్ట్ కాలేకపోతున్నాము. దయచేసి మీ ఇంటర్నెట్ కనెక్షన్‌ని తనిఖీ చేయండి.",
+    "errorServerUnavailable": "సర్వర్ ప్రస్తుతం అందుబాటులో లేదు. దయచేసి కాసేపటి తర్వాత ప్రయత్నించండి.",
+    "errorTimeout": "కనెక్షన్ సమయం ముగిసింది. దయచేసి మళ్లీ ప్రయత్నించండి.",
+    "errorUserNotFound": "ఈ ఇమెయిల్ చిరునామాతో ఖాతా ఏదీ కనుగొనబడలేదు.",
+    "errorGenericLogin": "లాగిన్ చేస్తున్నప్పుడు ఏదో తప్పు జరిగింది. దయచేసి మళ్లీ ప్రయత్నించండి.",
+    "loginSuccessful": "లాగిన్ విజయవంతమైంది! తిరిగి స్వాగతం.",
+    "loggingIn": "సైన్ ఇన్ చేస్తోంది...",
+    "fillDemoCredentials": "⚡ డెమో అభ్యర్థి వివరాలను పూరించండి"
   },
   "hi": {
     "appName": "जॉबवाणी",
@@ -1146,7 +1162,15 @@ const APP_TRANSLATIONS = {
     "supportEmailLabel": "प्रत्यक्ष सहायता ईमेल",
     "logoutConfirmTitle": "लॉग आउट",
     "logoutConfirmMessage": "क्या आप वाकई JobVaani से लॉग आउट करना चाहते हैं?",
-    "logoutSubtitle": "अपने उम्मीदवार खाते से साइन आउट करें"
+    "logoutSubtitle": "अपने उम्मीदवार खाते से साइन आउट करें",
+    "errorNoInternet": "सर्वर से कनेक्ट करने में असमर्थ। कृपया अपना इंटरनेट कनेक्शन जांचें।",
+    "errorServerUnavailable": "सर्वर वर्तमान में अनुपलब्ध है। कृपया बाद में पुनः प्रयास करें।",
+    "errorTimeout": "कनेक्शन टाइम आउट हो गया। कृपया पुनः प्रयास करें।",
+    "errorUserNotFound": "इस ईमेल पते के साथ कोई खाता नहीं मिला।",
+    "errorGenericLogin": "लॉग इन करते समय कुछ गलत हो गया। कृपया पुनः प्रयास करें।",
+    "loginSuccessful": "लॉगिन सफल रहा! पुनः स्वागत है।",
+    "loggingIn": "साइन इन हो रहा है...",
+    "fillDemoCredentials": "⚡ डेमो उम्मीदवार विवरण भरें"
   },
   "pa": {
     "appName": "ਜੌਬਵਾਣੀ",
@@ -1529,6 +1553,14 @@ const APP_TRANSLATIONS = {
     "supportEmailLabel": "ਸਿੱਧਾ ਸਹਾਇਤਾ ਈਮੇਲ",
     "logoutConfirmTitle": "ਲਾਗ ਆਉਟ",
     "logoutConfirmMessage": "ਕੀ ਤੁਸੀਂ ਯਕੀਨਨ JobVaani ਤੋਂ ਲਾਗ ਆਉਟ ਕਰਨਾ ਚਾਹੁੰਦੇ ਹੋ?",
-    "logoutSubtitle": "ਆਪਣੇ ਉਮੀਦਵਾਰ ਖਾਤੇ ਤੋਂ ਸਾਈਨ ਆਉਟ ਕਰੋ"
+    "logoutSubtitle": "ਆਪਣੇ ਉਮੀਦਵਾਰ ਖਾਤੇ ਤੋਂ ਸਾਈਨ ਆਉਟ ਕਰੋ",
+    "errorNoInternet": "ਸਰਵਰ ਨਾਲ ਜੁੜਨ ਵਿੱਚ ਅਸਮਰੱਥ। ਕਿਰਪਾ ਕਰਕੇ ਆਪਣਾ ਇੰਟਰਨੈਟ ਕਨੈਕਸ਼ਨ ਜਾਂਚੋ।",
+    "errorServerUnavailable": "ਸਰਵਰ ਇਸ ਵੇਲੇ ਅਣਉਪਲਬਧ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਬਾਅਦ ਵਿੱਚ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+    "errorTimeout": "ਕਨੈਕਸ਼ਨ ਦਾ ਸਮਾਂ ਸਮਾਪਤ ਹੋ ਗਿਆ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+    "errorUserNotFound": "ਇਸ ਈਮੇਲ ਪਤੇ ਨਾਲ ਕੋਈ ਖਾਤਾ ਨਹੀਂ ਮਿਲਿਆ।",
+    "errorGenericLogin": "ਲਾਗਇਨ ਕਰਨ ਦੌਰਾਨ ਕੁਝ ਗਲਤ ਹੋ ਗਿਆ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+    "loginSuccessful": "ਲਾਗਇਨ ਸਫਲ ਰਿਹਾ! ਦੁਬਾਰਾ ਜੀ ਆਇਆਂ ਨੂੰ।",
+    "loggingIn": "ਸਾਈਨ ਇਨ ਹੋ ਰਿਹਾ ਹੈ...",
+    "fillDemoCredentials": "⚡ ਡੈਮੋ ਉਮੀਦਵਾਰ ਦੇ ਵੇਰਵੇ ਭਰੋ"
   }
 };

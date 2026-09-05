@@ -482,5 +482,37 @@
   "supportEmailLabel": "Direct Support Email",
   "logoutConfirmTitle": "Log Out",
   "logoutConfirmMessage": "Are you sure you want to log out of JobVaani? You will need to log in again to access saved jobs and notifications.",
-  "logoutSubtitle": "Sign out of your candidate account"
+  "logoutSubtitle": "Sign out of your candidate account",
+  "errorNoInternet": "Unable to connect to the server. Please check your internet connection.",
+  "@errorNoInternet": {
+    "description": "errorNoInternet"
+  },
+  "errorServerUnavailable": "Server is currently unavailable. Please try again later.",
+  "@errorServerUnavailable": {
+    "description": "errorServerUnavailable"
+  },
+  "errorTimeout": "Connection timed out. Please try again.",
+  "@errorTimeout": {
+    "description": "errorTimeout"
+  },
+  "errorUserNotFound": "No account found with this email address.",
+  "@errorUserNotFound": {
+    "description": "errorUserNotFound"
+  },
+  "errorGenericLogin": "Something went wrong while logging in. Please try again.",
+  "@errorGenericLogin": {
+    "description": "errorGenericLogin"
+  },
+  "loginSuccessful": "Login successful! Welcome back.",
+  "@loginSuccessful": {
+    "description": "loginSuccessful"
+  },
+  "loggingIn": "Signing in...",
+  "@loggingIn": {
+    "description": "loggingIn"
+  },
+  "fillDemoCredentials": "⚡ Fill Demo Candidate Credentials",
+  "@fillDemoCredentials": {
+    "description": "fillDemoCredentials"
+  }
 }
