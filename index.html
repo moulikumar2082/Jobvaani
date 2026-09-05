@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>JobVaani - Every Opportunity, In Your Language</title>
+  <meta name="description" content="India's smart multilingual recruitment & government opportunity discovery platform. Powered by AI Job Matching and Deadline Intelligence.">
+  
+  <!-- Typography & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+Devanagari:wght@500;700&family=Noto+Sans+Gurmukhi:wght@500;700&family=Noto+Sans+Telugu:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+  
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="device-container">
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <span id="status-time">09:41</span>
+      <div class="notch"></div>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span class="material-symbols-rounded" style="font-size:16px;">signal_cellular_4_bar</span>
+        <span class="material-symbols-rounded" style="font-size:16px;">wifi</span>
+        <span class="material-symbols-rounded" style="font-size:16px;">battery_full</span>
+      </div>
+    </div>
+
+    <!-- App Viewport -->
+    <div class="app-viewport" id="app-viewport">
+      
+      <!-- SCREEN: HOME -->
+      <section class="screen active" id="screen-home">
+        <!-- Top App Header -->
+        <header class="app-header">
+          <div class="greeting-text">
+            <h2 id="home-greeting">Namaste, Mowli 👋</h2>
+            <p id="home-subheading">Every Opportunity, In Your Language</p>
+          </div>
+          <div class="header-actions">
+            <button class="icon-btn" id="btn-open-lang" title="Select Language">
+              <span class="material-symbols-rounded">translate</span>
+            </button>
+            <button class="icon-btn" id="btn-toggle-theme" title="Toggle Dark/Light Mode">
+              <span class="material-symbols-rounded" id="theme-icon">dark_mode</span>
+            </button>
+            <button class="icon-btn" id="btn-header-notif" title="Notifications">
+              <span class="material-symbols-rounded">notifications</span>
+              <span class="badge-counter" id="header-unread-count">3</span>
+            </button>
+          </div>
+        </header>
+
+        <!-- Deadline Alert Banner (Step 22) -->
+        <div class="job-card" id="deadline-alert-banner" style="background: linear-gradient(135deg, rgba(225, 29, 72, 0.08), rgba(245, 158, 11, 0.12)); border: 1.5px solid rgba(225, 29, 72, 0.35); padding: 14px 16px; margin-bottom: 16px;">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div style="width:38px; height:38px; border-radius:10px; background:rgba(225, 29, 72, 0.18); color:var(--urgency-red); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+              <span class="material-symbols-rounded" style="font-size:22px;">notification_important</span>
+            </div>
+            <div style="flex:1;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:11px; font-weight:800; color:var(--urgency-red); text-transform:uppercase; letter-spacing:0.5px;" id="alert-badge-text">⏰ 1 DAY REMAINING</span>
+                <span style="font-size:11px; font-weight:700; color:var(--text-muted);">Closes 06 Sep</span>
+              </div>
+              <h4 style="font-size:13.5px; font-weight:800; color:var(--text-primary); margin-top:2px;" id="alert-job-title">UPSC Civil Services Examination 2026</h4>
+              <p style="font-size:11.5px; color:var(--text-secondary); margin-top:2px;" id="alert-job-desc">Your saved application closes in 1 day. Complete fee submission.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Search Bar Trigger -->
+        <div class="search-box" id="home-search-trigger">
+          <span class="material-symbols-rounded" style="color:var(--text-muted); font-size:20px;">search</span>
+          <input type="text" placeholder="Search roles, skills, Sarkari jobs..." readonly id="home-search-placeholder">
+          <button class="icon-btn" style="width:30px; height:30px; border-radius:8px; border:none; background:transparent;" id="btn-quick-filter">
+            <span class="material-symbols-rounded" style="font-size:20px; color:var(--text-secondary);">tune</span>
+          </button>
+        </div>
+
+        <!-- Category Horizontal Filter Chips -->
+        <div class="chip-scroll" id="home-category-chips">
+          <button class="chip active" data-category="all">
+            <span class="material-symbols-rounded" style="font-size:16px;">work</span>
+            <span id="chip-all">All Jobs</span>
+          </button>
+          <button class="chip" data-category="recommended">
+            <span class="material-symbols-rounded" style="font-size:16px; color:#10b981;">auto_awesome</span>
+            <span id="chip-ai-match">AI Recommended</span>
+          </button>
+          <button class="chip" data-category="government">
+            <span class="material-symbols-rounded" style="font-size:16px; color:var(--sarkari-amber);">account_balance</span>
+            <span id="chip-govt">Government</span>
+          </button>
+          <button class="chip" data-category="cybersecurity">
+            <span class="material-symbols-rounded" style="font-size:16px; color:var(--indigo-accent);">security</span>
+            <span id="chip-cyber">Cybersecurity</span>
+          </button>
+          <button class="chip" data-category="software">
+            <span class="material-symbols-rounded" style="font-size:16px; color:var(--primary-light);">code</span>
+            <span id="chip-software">Software</span>
+          </button>
+        </div>
+
+        <!-- Featured AI Match Highlight (Step 20 & 21 Banner) -->
+        <div class="section-header">
+          <h3 class="section-title" id="sec-ai-recommended">✨ Top AI Match For You</h3>
+          <span class="section-link" id="link-view-match-algo">How it works</span>
+        </div>
+        <div id="home-ai-hero-card"></div>
+
+        <!-- Opportunities Feed -->
+        <div class="section-header" style="margin-top:22px;">
+          <h3 class="section-title" id="sec-opportunities">Explore Opportunities</h3>
+          <span class="section-link" id="home-jobs-count">Showing 10 jobs</span>
+        </div>
+        <div id="home-jobs-list"></div>
+      </section>
+
+      <!-- SCREEN: SEARCH -->
+      <section class="screen" id="screen-search">
+        <div class="app-header">
+          <div class="greeting-text">
+            <h2 id="search-title">Search & Filter</h2>
+            <p id="search-sub">Find verified corporate & government postings</p>
+          </div>
+        </div>
+
+        <div class="search-box">
+          <span class="material-symbols-rounded" style="color:var(--text-muted); font-size:22px;">search</span>
+          <input type="text" id="search-input" placeholder="Role, company, skill (e.g. Python, UPSC)...">
+          <button class="icon-btn" id="btn-clear-search" style="width:28px; height:28px; border:none; background:transparent; display:none;">
+            <span class="material-symbols-rounded" style="font-size:18px;">close</span>
+          </button>
+        </div>
+
+        <!-- Filter Options -->
+        <div style="display:flex; gap:8px; overflow-x:auto; padding-bottom:8px; margin-bottom:14px; scrollbar-width:none;">
+          <select id="filter-type-select" style="padding:8px 12px; border-radius:10px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-primary); font-size:12px; font-weight:700;">
+            <option value="all">All Sectors</option>
+            <option value="government">Government Only</option>
+            <option value="private">Private Tech Only</option>
+          </select>
+          <select id="filter-location-select" style="padding:8px 12px; border-radius:10px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-primary); font-size:12px; font-weight:700;">
+            <option value="all">All Locations</option>
+            <option value="Bengaluru">Bengaluru</option>
+            <option value="Hyderabad">Hyderabad</option>
+            <option value="Delhi">Delhi NCR</option>
+            <option value="Remote">Remote</option>
+          </select>
+          <select id="filter-exp-select" style="padding:8px 12px; border-radius:10px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-primary); font-size:12px; font-weight:700;">
+            <option value="all">Any Experience</option>
+            <option value="Fresher">Fresher</option>
+            <option value="1-3 Years">1-3 Years</option>
+            <option value="3-5 Years">3-5+ Years</option>
+          </select>
+        </div>
+
+        <div style="font-size:12.5px; font-weight:700; color:var(--text-secondary); margin-bottom:12px;" id="search-results-label">
+          Available Positions
+        </div>
+        <div id="search-results-list"></div>
+      </section>
+
+      <!-- SCREEN: SAVED -->
+      <section class="screen" id="screen-saved">
+        <div class="app-header">
+          <div class="greeting-text">
+            <h2 id="saved-title">Saved Applications</h2>
+            <p id="saved-sub">Track active deadlines and exam dates</p>
+          </div>
+        </div>
+
+        <!-- Deadline Notice Card (Step 22) -->
+        <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:12px 16px; margin-bottom:16px; display:flex; align-items:center; gap:10px;">
+          <span class="material-symbols-rounded" style="color:var(--urgency-red); font-size:20px;">alarm_on</span>
+          <span style="font-size:12px; color:var(--text-secondary);" id="saved-deadline-helper">
+            Automated alerts are active for 7d, 3d, 1d, and deadline milestones.
+          </span>
+        </div>
+
+        <div id="saved-jobs-list"></div>
+      </section>
+
+      <!-- SCREEN: NOTIFICATIONS (Step 23 FCM Integration) -->
+      <section class="screen" id="screen-notifications">
+        <div class="app-header">
+          <div class="greeting-text">
+            <h2 id="notif-title">Notifications Hub</h2>
+            <p id="notif-sub">FCM Real-time Alerts & Reminders</p>
+          </div>
+          <button class="icon-btn" id="btn-open-push-settings" title="FCM Push Preferences">
+            <span class="material-symbols-rounded">tune</span>
+          </button>
+        </div>
+
+        <!-- Push Notification Interactive Simulator Box -->
+        <div style="background:linear-gradient(135deg, rgba(30,58,138,0.08), rgba(99,102,241,0.12)); border:1.5px solid rgba(99,102,241,0.3); border-radius:var(--radius-md); padding:14px; margin-bottom:16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span style="font-size:12px; font-weight:800; color:var(--primary-light); display:flex; align-items:center; gap:6px;">
+              <span class="material-symbols-rounded" style="font-size:16px;">send_to_mobile</span>
+              Firebase FCM Simulator
+            </span>
+            <span style="font-size:10px; font-weight:700; background:rgba(5,150,105,0.15); color:var(--success-green); padding:2px 6px; border-radius:4px;">
+              Token Synced
+            </span>
+          </div>
+          <p style="font-size:11.5px; color:var(--text-secondary); margin-bottom:10px;" id="fcm-sim-desc">
+            Trigger a simulated push notification to verify the FCM dispatcher architecture.
+          </p>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+            <button class="btn-outlined" style="padding:7px; font-size:11px;" id="btn-sim-match">🎯 Matching Job</button>
+            <button class="btn-outlined" style="padding:7px; font-size:11px;" id="btn-sim-govt">🏛️ Govt Alert</button>
+            <button class="btn-outlined" style="padding:7px; font-size:11px;" id="btn-sim-deadline">⏰ 1-Day Deadline</button>
+            <button class="btn-outlined" style="padding:7px; font-size:11px;" id="btn-sim-system">⚙️ System Alert</button>
+          </div>
+        </div>
+
+        <!-- Notification Category Filters -->
+        <div class="chip-scroll" id="notif-category-chips">
+          <button class="chip active" data-filter="all">All (<span id="notif-count-all">0</span>)</button>
+          <button class="chip" data-filter="match">Matches</button>
+          <button class="chip" data-filter="government">Govt</button>
+          <button class="chip" data-filter="deadline">Deadlines</button>
+          <button class="chip" data-filter="system">System</button>
+        </div>
+
+        <div id="notifications-list"></div>
+      </section>
+
+      <!-- SCREEN: PROFILE & SETTINGS (Step 24 & 25) -->
+      <section class="screen" id="screen-profile">
+        <div class="app-header">
+          <div class="greeting-text">
+            <h2 id="profile-title">Profile & Settings</h2>
+            <p id="profile-sub">Manage resume, preferences & theme</p>
+          </div>
+          <button class="icon-btn" id="btn-profile-edit" title="Edit Profile">
+            <span class="material-symbols-rounded">edit</span>
+          </button>
+        </div>
+
+        <!-- User Profile Card -->
+        <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:18px; margin-bottom:18px; display:flex; gap:14px; align-items:center;">
+          <div style="width:58px; height:58px; border-radius:50%; background:linear-gradient(135deg, var(--primary), var(--teal-accent)); color:#fff; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:900; flex-shrink:0;">
+            MK
+          </div>
+          <div style="flex:1;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <h3 style="font-size:16px; font-weight:800; color:var(--text-primary);" id="user-name-display">Mowli Kumar</h3>
+              <span style="font-size:10.5px; font-weight:800; background:rgba(5,150,105,0.15); color:var(--success-green); padding:2px 8px; border-radius:6px;">VERIFIED</span>
+            </div>
+            <p style="font-size:12px; color:var(--text-secondary); margin-top:2px;" id="user-education-display">B.Tech in Computer Science & Engineering</p>
+            <div style="display:flex; gap:8px; margin-top:6px; font-size:11px; color:var(--text-muted);">
+              <span>📍 Bengaluru, IN</span>
+              <span>•</span>
+              <span>💼 1-3 Years Exp</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Secure Resume Vault (Step 19 Architecture) -->
+        <div class="section-header">
+          <h3 class="section-title" id="sec-resume-vault">📄 Secure Resume Vault</h3>
+          <span class="section-link" id="btn-resume-info">AES-256 KMS</span>
+        </div>
+        <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:16px; margin-bottom:20px;">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+            <div style="width:42px; height:42px; border-radius:10px; background:rgba(225, 29, 72, 0.1); color:var(--urgency-red); display:flex; align-items:center; justify-content:center; font-size:24px;">
+              <span class="material-symbols-rounded">picture_as_pdf</span>
+            </div>
+            <div style="flex:1; overflow:hidden;">
+              <h4 style="font-size:13.5px; font-weight:700; color:var(--text-primary); text-overflow:ellipsis; overflow:hidden; white-space:nowrap;" id="resume-filename">
+                Mowli_Kumar_Software_Engineer_CV.pdf
+              </h4>
+              <p style="font-size:11px; color:var(--text-muted); margin-top:2px;" id="resume-meta">
+                1.4 MB • Encrypted (Google Cloud KMS)
+              </p>
+            </div>
+            <button class="icon-btn" id="btn-view-resume-modal" title="View Resume">
+              <span class="material-symbols-rounded">visibility</span>
+            </button>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn-outlined" style="padding:8px 12px; font-size:12px; flex:1;" id="btn-replace-resume">
+              <span class="material-symbols-rounded" style="font-size:16px;">upload_file</span> Replace
+            </button>
+            <button class="btn-outlined" style="padding:8px 12px; font-size:12px; color:var(--urgency-red); border-color:rgba(225,29,72,0.3);" id="btn-delete-resume">
+              <span class="material-symbols-rounded" style="font-size:16px;">delete</span> Remove
+            </button>
+          </div>
+        </div>
+
+        <!-- Settings Options (Steps 24 & 25) -->
+        <div class="section-header">
+          <h3 class="section-title" id="sec-app-settings">App Settings</h3>
+        </div>
+        <div class="settings-group">
+          <!-- Language Option -->
+          <div class="settings-item" id="item-settings-language">
+            <div class="settings-icon" style="background:rgba(30,58,138,0.1); color:var(--primary-light);">
+              <span class="material-symbols-rounded">translate</span>
+            </div>
+            <div class="settings-text">
+              <h5 id="set-lang-title">App Language</h5>
+              <p id="current-language-label">English (Default)</p>
+            </div>
+            <span class="material-symbols-rounded" style="color:var(--text-muted); font-size:18px;">chevron_right</span>
+          </div>
+
+          <!-- Dark Mode Option (Step 25) -->
+          <div class="settings-item" id="item-settings-darkmode">
+            <div class="settings-icon" style="background:rgba(99,102,241,0.1); color:var(--indigo-accent);">
+              <span class="material-symbols-rounded">dark_mode</span>
+            </div>
+            <div class="settings-text">
+              <h5 id="set-theme-title">Dark Mode</h5>
+              <p id="current-theme-label">Active (Sleek Contrast)</p>
+            </div>
+            <span class="material-symbols-rounded" style="color:var(--primary-light); font-size:24px;" id="theme-toggle-check">toggle_on</span>
+          </div>
+
+          <!-- Push Notifications (Step 23 & 24) -->
+          <div class="settings-item" id="item-settings-push">
+            <div class="settings-icon" style="background:rgba(5,150,105,0.1); color:var(--success-green);">
+              <span class="material-symbols-rounded">notifications_active</span>
+            </div>
+            <div class="settings-text">
+              <h5 id="set-notif-title">Push Notifications</h5>
+              <p id="set-notif-desc">FCM alerts, deadlines & jobs</p>
+            </div>
+            <span class="material-symbols-rounded" style="color:var(--text-muted); font-size:18px;">chevron_right</span>
+          </div>
+
+          <!-- Job Preferences (Step 18) -->
+          <div class="settings-item" id="item-settings-preferences">
+            <div class="settings-icon" style="background:rgba(217,119,6,0.1); color:var(--sarkari-amber);">
+              <span class="material-symbols-rounded">tune</span>
+            </div>
+            <div class="settings-text">
+              <h5 id="set-pref-title">Job & Career Preferences</h5>
+              <p id="set-pref-desc">Cybersecurity, Govt, Bangalore...</p>
+            </div>
+            <span class="material-symbols-rounded" style="color:var(--text-muted); font-size:18px;">chevron_right</span>
+          </div>
+
+          <!-- Privacy & Security -->
+          <div class="settings-item" id="item-settings-privacy">
+            <div class="settings-icon" style="background:rgba(13,148,136,0.1); color:var(--teal-accent);">
+              <span class="material-symbols-rounded">shield</span>
+            </div>
+            <div class="settings-text">
+              <h5 id="set-privacy-title">Privacy & Security</h5>
+              <p id="set-privacy-desc">Zero public resume exposure</p>
+            </div>
+            <span class="material-symbols-rounded" style="color:var(--text-muted); font-size:18px;">chevron_right</span>
+          </div>
+
+          <!-- About JobVaani -->
+          <div class="settings-item" id="item-settings-about">
+            <div class="settings-icon" style="background:rgba(148,163,184,0.15); color:var(--text-secondary);">
+              <span class="material-symbols-rounded">info</span>
+            </div>
+            <div class="settings-text">
+              <h5 id="set-about-title">About JobVaani</h5>
+              <p>v2.5.0 • Indian Multilingual Platform</p>
+            </div>
+            <span class="material-symbols-rounded" style="color:var(--text-muted); font-size:18px;">chevron_right</span>
+          </div>
+
+          <!-- Logout -->
+          <div class="settings-item" id="item-settings-logout">
+            <div class="settings-icon" style="background:rgba(225,29,72,0.1); color:var(--urgency-red);">
+              <span class="material-symbols-rounded">logout</span>
+            </div>
+            <div class="settings-text">
+              <h5 style="color:var(--urgency-red);" id="set-logout-title">Log Out</h5>
+              <p id="set-logout-desc">Safely disconnect session</p>
+            </div>
+            <span class="material-symbols-rounded" style="color:var(--urgency-red); font-size:18px;">chevron_right</span>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /app-viewport -->
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+      <div class="nav-item active" data-target="screen-home">
+        <span class="material-symbols-rounded">home</span>
+        <span id="nav-lbl-home">Home</span>
+      </div>
+      <div class="nav-item" data-target="screen-search">
+        <span class="material-symbols-rounded">search</span>
+        <span id="nav-lbl-search">Search</span>
+      </div>
+      <div class="nav-item" data-target="screen-saved">
+        <span class="material-symbols-rounded">bookmark</span>
+        <span id="nav-lbl-saved">Saved</span>
+      </div>
+      <div class="nav-item" data-target="screen-notifications">
+        <span class="material-symbols-rounded">notifications</span>
+        <span id="nav-lbl-notif">Alerts</span>
+        <span class="badge-counter" id="nav-unread-badge" style="top:2px; right:16px;">3</span>
+      </div>
+      <div class="nav-item" data-target="screen-profile">
+        <span class="material-symbols-rounded">person</span>
+        <span id="nav-lbl-profile">Profile</span>
+      </div>
+    </nav>
+
+    <!-- MODAL 1: JOB DETAILS (Steps 20, 21, 22) -->
+    <div class="modal-overlay" id="modal-job-details">
+      <div class="modal-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">
+          <span id="detail-company-title">Company Details</span>
+          <button class="icon-btn" style="width:32px; height:32px; border:none; background:transparent;" onclick="closeModals()">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <div id="modal-job-content"></div>
+      </div>
+    </div>
+
+    <!-- MODAL 2: LANGUAGE SELECTOR -->
+    <div class="modal-overlay" id="modal-language">
+      <div class="modal-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">
+          <span id="modal-lang-header">Select Language / భాషను ఎంచుకోండి</span>
+          <button class="icon-btn" style="width:32px; height:32px; border:none; background:transparent;" onclick="closeModals()">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <p style="font-size:12.5px; color:var(--text-secondary); margin-bottom:14px;" id="modal-lang-sub">
+          Instant full-app translation powered by JobVaani Localization Engine.
+        </p>
+        <div class="lang-grid">
+          <div class="lang-card active" data-lang="en">
+            <div class="lang-native">English</div>
+            <div class="lang-english">English (Default)</div>
+          </div>
+          <div class="lang-card" data-lang="te">
+            <div class="lang-native">తెలుగు</div>
+            <div class="lang-english">Telugu</div>
+          </div>
+          <div class="lang-card" data-lang="hi">
+            <div class="lang-native">हिन्दी</div>
+            <div class="lang-english">Hindi</div>
+          </div>
+          <div class="lang-card" data-lang="pa">
+            <div class="lang-native">ਪੰਜਾਬੀ</div>
+            <div class="lang-english">Punjabi</div>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="closeModals()" id="btn-save-lang">Confirm Selection</button>
+      </div>
+    </div>
+
+    <!-- MODAL 3: PUSH NOTIFICATION SETTINGS (Step 23) -->
+    <div class="modal-overlay" id="modal-push-settings">
+      <div class="modal-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">
+          <span id="modal-fcm-title">FCM Push Notification Settings</span>
+          <button class="icon-btn" style="width:32px; height:32px; border:none; background:transparent;" onclick="closeModals()">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <div class="settings-group" style="margin-bottom:16px;">
+          <div class="settings-item">
+            <div class="settings-icon" style="background:rgba(5,150,105,0.1); color:var(--success-green);"><span class="material-symbols-rounded">auto_awesome</span></div>
+            <div class="settings-text">
+              <h5>New Matching Jobs</h5>
+              <p>Triggered when roles match >= 75% of your profile</p>
+            </div>
+            <input type="checkbox" id="chk-notif-matches" checked style="transform:scale(1.3); accent-color:var(--primary);">
+          </div>
+          <div class="settings-item">
+            <div class="settings-icon" style="background:rgba(217,119,6,0.1); color:var(--sarkari-amber);"><span class="material-symbols-rounded">account_balance</span></div>
+            <div class="settings-text">
+              <h5>Government Job Alerts</h5>
+              <p>Official UPSC, SSC, Railways & State PSC notices</p>
+            </div>
+            <input type="checkbox" id="chk-notif-govt" checked style="transform:scale(1.3); accent-color:var(--primary);">
+          </div>
+          <div class="settings-item">
+            <div class="settings-icon" style="background:rgba(225,29,72,0.1); color:var(--urgency-red);"><span class="material-symbols-rounded">alarm</span></div>
+            <div class="settings-text">
+              <h5>Saved-Job Deadlines</h5>
+              <p>7-day, 3-day, 1-day, & deadline day countdowns</p>
+            </div>
+            <input type="checkbox" id="chk-notif-deadlines" checked style="transform:scale(1.3); accent-color:var(--primary);">
+          </div>
+          <div class="settings-item">
+            <div class="settings-icon" style="background:rgba(99,102,241,0.1); color:var(--indigo-accent);"><span class="material-symbols-rounded">info</span></div>
+            <div class="settings-text">
+              <h5>System Notifications</h5>
+              <p>Platform security updates and account telemetry</p>
+            </div>
+            <input type="checkbox" id="chk-notif-system" checked style="transform:scale(1.3); accent-color:var(--primary);">
+          </div>
+        </div>
+        <div style="background:var(--input-bg); border-radius:10px; padding:10px 14px; font-size:11.5px; color:var(--text-secondary); margin-bottom:16px;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+            <strong>FCM Device Token Status:</strong>
+            <span style="color:var(--success-green); font-weight:800;">● Active in Backend</span>
+          </div>
+          <code style="font-family:monospace; font-size:10.5px; color:var(--text-muted); word-break:break-all;">
+            fcm_jv_98273641209_sec_tok_prod_in
+          </code>
+        </div>
+        <button class="btn-primary" onclick="savePushSettings()">Save Preferences</button>
+      </div>
+    </div>
+
+    <!-- MODAL 4: RESUME VAULT VIEWER (Step 19) -->
+    <div class="modal-overlay" id="modal-resume-view">
+      <div class="modal-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">
+          <span>Encrypted Resume Details</span>
+          <button class="icon-btn" style="width:32px; height:32px; border:none; background:transparent;" onclick="closeModals()">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <div style="background:var(--input-bg); border-radius:12px; padding:16px; margin-bottom:16px;">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
+            <span class="material-symbols-rounded" style="color:var(--urgency-red); font-size:36px;">description</span>
+            <div>
+              <h4 style="font-size:14px; font-weight:800; color:var(--text-primary);">Mowli_Kumar_Software_Engineer_CV.pdf</h4>
+              <p style="font-size:11.5px; color:var(--text-secondary);">Uploaded: 01 Sep 2026 • 1.4 MB</p>
+            </div>
+          </div>
+          <div style="font-size:12px; line-height:1.6; color:var(--text-secondary);">
+            <p><strong>Cloud Storage:</strong> Private GCS Bucket (Restricted Service Account)</p>
+            <p><strong>Encryption:</strong> AES-256-GCM via Google Cloud KMS</p>
+            <p><strong>Extracted Skills:</strong> Python, SQL, Linux, Cybersecurity, Cloud/AWS, Flutter</p>
+            <p><strong>Public URL:</strong> <span style="color:var(--urgency-red); font-weight:700;">Blocked / Private (Zero Exposure)</span></p>
+          </div>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button class="btn-outlined" style="flex:1;" onclick="alert('Simulating download of decrypted temporary signed URL...');">Download</button>
+          <button class="btn-primary" style="flex:1;" onclick="closeModals()">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 5: ABOUT JOBVAANI -->
+    <div class="modal-overlay" id="modal-about">
+      <div class="modal-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">
+          <span>About JobVaani</span>
+          <button class="icon-btn" style="width:32px; height:32px; border:none; background:transparent;" onclick="closeModals()">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <div style="text-align:center; padding:10px 0 20px;">
+          <div style="width:64px; height:64px; border-radius:20px; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-size:32px; margin:0 auto 12px; box-shadow:0 8px 24px rgba(30,58,138,0.3);">
+            💼
+          </div>
+          <h3 style="font-size:18px; font-weight:900; color:var(--text-primary);">JobVaani - జాబ్‌వాణి</h3>
+          <p style="font-size:13px; color:var(--primary-light); font-weight:700; margin-top:4px;">“Every Opportunity, In Your Language”</p>
+          <p style="font-size:12px; color:var(--text-secondary); margin-top:12px; line-height:1.6;">
+            Bridging India’s job seekers with verified private tech roles and government recruitment notifications in Telugu, Hindi, Punjabi, and English.
+          </p>
+        </div>
+        <div style="background:var(--input-bg); border-radius:12px; padding:14px; font-size:12px; color:var(--text-secondary); margin-bottom:16px;">
+          <p><strong>Version:</strong> 2.5.0 (Material 3 Dark/Light)</p>
+          <p><strong>Architecture:</strong> Step 1 to Step 25 Fully Implemented</p>
+          <p><strong>AI Recommendation:</strong> 5-Factor Weighted Scoring Engine</p>
+          <p><strong>Push Engine:</strong> Firebase Cloud Messaging (FCM)</p>
+        </div>
+        <button class="btn-primary" onclick="closeModals()">Done</button>
+      </div>
+    </div>
+
+  </div><!-- /device-container -->
+
+  <!-- Load Data & App Scripts -->
+  <script src="translations.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
